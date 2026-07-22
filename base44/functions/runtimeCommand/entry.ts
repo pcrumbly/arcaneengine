@@ -42,8 +42,9 @@ Deno.serve(async (req) => {
       const carried = rows.filter((item) => item.container?.container_type !== 'loot');
       const loot = rows.filter((item) => item.container?.container_type === 'loot');
       const weight = carried.reduce((sum, item) => sum + (item.definition.weight || 0) * item.quantity, 0);
+      const lootWeight = loot.reduce((sum, item) => sum + (item.definition.weight || 0) * item.quantity, 0);
       const capacity = containers.filter((container) => container.container_type !== 'loot').reduce((sum, container) => sum + (container.capacity || 0), 0);
-      return { character, containers, items: rows, summary: { weight, capacity, equipped: carried.filter((item) => item.equipped_slot).length, loot: loot.reduce((sum, item) => sum + item.quantity, 0) } };
+      return { character, containers, items: rows, summary: { weight, capacity, lootWeight, canCollectLoot: capacity <= 0 || weight + lootWeight <= capacity, equipped: carried.filter((item) => item.equipped_slot).length, loot: loot.reduce((sum, item) => sum + item.quantity, 0) } };
     };
     const loadQuests = async (characterId) => {
       const character = await base44.entities.Character.get(characterId);
