@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
     }
 
     if (command === 'GET_INVENTORY') return Response.json(await loadInventory(body.characterId));
-    if (['SPLIT_ITEM','MERGE_ITEM','TRANSFER_ITEM','COLLECT_LOOT'].includes(command)) {
+    if (['SPLIT_ITEM','MERGE_ITEM','TRANSFER_ITEM','BULK_TRANSFER_ITEMS','COLLECT_LOOT'].includes(command)) {
       const character = await base44.entities.Character.get(body.characterId);
       const result = await handleInventoryCommand(base44, user, character, body, requestId);
       if (result) return result;
