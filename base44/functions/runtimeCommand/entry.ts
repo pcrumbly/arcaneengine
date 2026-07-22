@@ -8,6 +8,16 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const command = body.command;
     const requestId = body.requestId || crypto.randomUUID();
+    const loadInventory = async (characterId) => {
+      const character = await base44.entities.Character.get(characterId);
+      const containers = await base44.asServiceRole.entities.Container.filter({ character_id: character.id }, 'name', 30);
+      const items = await base44.asServiceRole.entities.ItemInstance.filter({ character_id: character.id }, '-acquired_at', 200);
+      const definitions = await Promise.all(items.map((item) => base44.asServiceRole.entities.ItemDefinition.get(item.definition_id)));
+      const rows = items.map((item, index) => ({ ...item, definition: definitions[index] }));
+      const weight = rows.reduce((sum, item) => sum + (item.definition.weight || 0) * item.quantity, 0);
+      const capacity = containers.reduce((sum, container) => sum + (container.capacity || 0), 0);
+      return { character, containers, items: rows, summary: { weight, capacity, equipped: rows.filter((item) => item.equipped_slot).length } };
+    };
 
     if (command === 'STUDIO_OVERVIEW') {
       if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -27,7 +37,41 @@ Deno.serve(async (req) => {
       if (!release) return Response.json({ error: 'This game has no published content.' }, { status: 409 });
       const starts = await base44.asServiceRole.entities.LocationDefinition.filter({ game_id: game.id, content_version: release.version, tags: { '$in': ['start'] } }, '-created_date', 1);
       if (!starts[0]) return Response.json({ error: 'This game has no starting location.' }, { status: 409 });
-      await base44.entities.Character.create({ game_id: game.id, content_version: release.version, name: String(body.name || '').trim(), current_location_id: starts[0].id, attributes: {}, resources: { vitality: 100 }, currency: {}, tags: [], version: 1 });
+      const character = await base44.entities.Character.create({ game_id: game.id, content_version: release.version, name: String(body.name || '').trim(), current_location_id: starts[0].id, attributes: {}, resources: { vitality: 100 }, currency: {}, tags: [], version: 1 });
+      const container = await base44.asServiceRole.entities.Container.create({ game_id: game.id, character_id: character.id, name: 'Carried items', container_type: 'character', capacity: 30, version: 1 });
+      const starters = await base44.asServiceRole.entities.ItemDefinition.filter({ game_id: game.id, content_version: release.version, tags: { '$in': ['starter'] } }, 'name', 20);
+      if (starters.length) await base44.asServiceRole.entities.ItemInstance.bulkCreate(starters.map((definition) => ({ game_id: game.id, content_version: release.version, definition_id: definition.id, container_id: container.id, character_id: character.id, quantity: definition.stack_limit > 1 ? 3 : 1, quality: 'standard', bound_state: 'unbound', custom_properties: {}, applied_modifications: [], acquired_at: new Date().toISOString(), version: 1 })));
+    }
+
+    if (command === 'GET_INVENTORY') return Response.json(await loadInventory(body.characterId));
+
+    if (command === 'EQUIP_ITEM' || command === 'UNEQUIP_ITEM' || command === 'USE_ITEM') {
+      const character = await base44.entities.Character.get(body.characterId);
+      const duplicate = await base44.asServiceRole.entities.AuditEvent.filter({ actor_user_id: user.id, request_id: requestId, result: 'accepted' }, '-occurred_at', 1);
+      if (!duplicate.length) {
+        const item = await base44.asServiceRole.entities.ItemInstance.get(body.itemId);
+        if (item.character_id !== character.id) return Response.json({ error: 'Item ownership could not be verified.' }, { status: 403 });
+        if (item.version !== body.itemVersion) return Response.json({ error: 'Item state changed. Refresh and try again.' }, { status: 409 });
+        const definition = await base44.asServiceRole.entities.ItemDefinition.get(item.definition_id);
+        if (command === 'EQUIP_ITEM') {
+          const slot = body.slot;
+          if (!(definition.equipment_slots || []).includes(slot)) return Response.json({ error: 'That item cannot use the selected slot.' }, { status: 422 });
+          const equipped = await base44.asServiceRole.entities.ItemInstance.filter({ character_id: character.id, equipped_slot: slot }, '-updated_date', 20);
+          if (equipped.length) await base44.asServiceRole.entities.ItemInstance.bulkUpdate(equipped.map((current) => ({ id: current.id, equipped_slot: null, version: current.version + 1 })));
+          await base44.asServiceRole.entities.ItemInstance.update(item.id, { equipped_slot: slot, version: item.version + 1 });
+        }
+        if (command === 'UNEQUIP_ITEM') await base44.asServiceRole.entities.ItemInstance.update(item.id, { equipped_slot: null, version: item.version + 1 });
+        if (command === 'USE_ITEM') {
+          if (!(definition.actions || []).includes('use')) return Response.json({ error: 'This item is not usable.' }, { status: 422 });
+          const resources = { ...(character.resources || {}) };
+          for (const effect of definition.use_effects || []) if (effect.type === 'resourceChange') resources[effect.resourceId] = Math.max(0, (resources[effect.resourceId] || 0) + Number(effect.amount || 0));
+          await base44.entities.Character.update(character.id, { resources, version: character.version + 1 });
+          if (item.quantity <= 1) await base44.asServiceRole.entities.ItemInstance.delete(item.id);
+          else await base44.asServiceRole.entities.ItemInstance.update(item.id, { quantity: item.quantity - 1, version: item.version + 1 });
+        }
+        await base44.asServiceRole.entities.AuditEvent.create({ game_id: character.game_id, actor_user_id: user.id, character_id: character.id, command, request_id: requestId, result: 'accepted', details: { item_id: item.id, definition_id: definition.id, slot: body.slot || null }, occurred_at: new Date().toISOString() });
+      }
+      return Response.json(await loadInventory(character.id));
     }
 
     if (command === 'MOVE_TO_LOCATION') {

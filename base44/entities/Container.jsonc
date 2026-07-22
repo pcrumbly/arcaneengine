@@ -1,0 +1,39 @@
+{
+  "name": "Container",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "container_type": {
+      "type": "string",
+      "enum": [
+        "character",
+        "party",
+        "location",
+        "bank",
+        "npc",
+        "mail",
+        "loot"
+      ]
+    },
+    "capacity": {
+      "type": "number"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "name",
+    "container_type"
+  ]
+}

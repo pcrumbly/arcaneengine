@@ -1,0 +1,54 @@
+{
+  "name": "AbilityDefinition",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "costs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "targeting": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "cooldown": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "key",
+    "name"
+  ]
+}

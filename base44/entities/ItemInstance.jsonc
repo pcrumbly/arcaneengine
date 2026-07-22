@@ -1,0 +1,69 @@
+{
+  "name": "ItemInstance",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "definition_id": {
+      "type": "string"
+    },
+    "container_id": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 1
+    },
+    "durability": {
+      "type": "number"
+    },
+    "quality": {
+      "type": "string"
+    },
+    "bound_state": {
+      "type": "string",
+      "enum": [
+        "unbound",
+        "character",
+        "account"
+      ],
+      "default": "unbound"
+    },
+    "custom_properties": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "equipped_slot": {
+      "type": "string"
+    },
+    "applied_modifications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "acquired_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "definition_id",
+    "container_id",
+    "quantity"
+  ]
+}

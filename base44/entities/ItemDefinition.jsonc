@@ -1,0 +1,85 @@
+{
+  "name": "ItemDefinition",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "stack_limit": {
+      "type": "number",
+      "default": 1
+    },
+    "weight": {
+      "type": "number",
+      "default": 0
+    },
+    "value": {
+      "type": "number",
+      "default": 0
+    },
+    "equipment_slots": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "granted_ability_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "modifiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "requirements": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "use_effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "key",
+    "name",
+    "category"
+  ]
+}

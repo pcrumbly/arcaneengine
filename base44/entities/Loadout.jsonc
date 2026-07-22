@@ -1,0 +1,53 @@
+{
+  "name": "Loadout",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": false
+    },
+    "equipment_assignments": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "active_ability_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "quick_slots": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tactical_preferences": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "formation_position": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "character_id",
+    "name"
+  ]
+}
