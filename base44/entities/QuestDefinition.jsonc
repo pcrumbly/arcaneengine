@@ -53,6 +53,10 @@
         "additionalProperties": true
       }
     },
+    "reward_selection": {
+      "type": "object",
+      "additionalProperties": true
+    },
     "repeatability": {
       "type": "string",
       "enum": [

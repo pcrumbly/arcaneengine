@@ -8,7 +8,7 @@ import { handleDialogueCommand, loadVisibleNpcs } from '../../shared/dialogue.ts
 import { handlePartyCommand, isMovementLocked, movePartyWithLeader } from '../../shared/party.ts';
 import { handleStudioAuthoringCommand } from '../../shared/studio.ts';
 import { handleCapabilityCommand } from '../../shared/capabilities.ts';
-import { createObjectiveRows, publishQuestEvent } from '../../shared/quests.ts';
+import { claimQuestReward, createObjectiveRows, publishQuestEvent, selectQuestBranch } from '../../shared/quests.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -84,6 +84,12 @@ Deno.serve(async (req) => {
 
     if (command === 'GET_INVENTORY') return Response.json(await loadInventory(body.characterId));
     if (command === 'GET_QUESTS') return Response.json(await loadQuests(body.characterId));
+    if (command === 'SELECT_QUEST_BRANCH' || command === 'SELECT_QUEST_REWARD') {
+      const character = await base44.entities.Character.get(body.characterId);
+      const result = command === 'SELECT_QUEST_BRANCH' ? await selectQuestBranch(base44, character, body.questInstanceId, body.questVersion, body.branchKey, requestId) : await claimQuestReward(base44, character, body.questInstanceId, body.questVersion, body.choiceKey);
+      if (result) return result;
+      return Response.json(await loadQuests(character.id));
+    }
 
     if (command === 'ACCEPT_QUEST') {
       const character = await base44.entities.Character.get(body.characterId);
