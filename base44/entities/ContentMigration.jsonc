@@ -1,0 +1,52 @@
+{
+  "name": "ContentMigration",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "from_version": {
+      "type": "string"
+    },
+    "to_version": {
+      "type": "string"
+    },
+    "strategy": {
+      "type": "string",
+      "enum": [
+        "grandfather",
+        "fallback"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "previewed",
+        "completed",
+        "failed"
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "executed_by_user_id": {
+      "type": "string"
+    },
+    "executed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "game_id",
+    "character_id",
+    "from_version",
+    "to_version",
+    "strategy",
+    "status"
+  ]
+}

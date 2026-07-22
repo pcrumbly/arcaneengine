@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { handleCombatCommand } from '../../shared/combat.ts';
 import { handleSettingsCommand } from '../../shared/settings.ts';
+import { handleContentCommand } from '../../shared/content.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -12,6 +13,7 @@ Deno.serve(async (req) => {
     const requestId = body.requestId || crypto.randomUUID();
     if (['GET_COMBAT','START_ENCOUNTER','SELECT_COMBAT_ACTION','COMPLETE_COMBAT'].includes(command)) return await handleCombatCommand(base44, user, body, requestId);
     if (['GET_SETTINGS','SAVE_SETTINGS','SAVE_KEY_BINDING','RESET_KEY_BINDINGS'].includes(command)) return await handleSettingsCommand(base44, user, body);
+    if (['CREATE_RELEASE','VALIDATE_RELEASE','PUBLISH_RELEASE','PREVIEW_MIGRATION','MIGRATE_CHARACTER'].includes(command)) return await handleContentCommand(base44, user, body);
     const loadInventory = async (characterId) => {
       const character = await base44.entities.Character.get(characterId);
       const containers = await base44.asServiceRole.entities.Container.filter({ character_id: character.id }, 'name', 30);
@@ -24,11 +26,14 @@ Deno.serve(async (req) => {
     };
     const loadQuests = async (characterId) => {
       const character = await base44.entities.Character.get(characterId);
-      const definitions = await base44.asServiceRole.entities.QuestDefinition.filter({ game_id: character.game_id, content_version: character.content_version }, 'name', 100);
+      const currentDefinitions = await base44.asServiceRole.entities.QuestDefinition.filter({ game_id: character.game_id, content_version: character.content_version }, 'name', 100);
       const instances = await base44.asServiceRole.entities.QuestInstance.filter({ character_id: character.id }, '-updated_date', 100);
+      const missingIds = [...new Set(instances.map((instance) => instance.definition_id).filter((id) => !currentDefinitions.some((definition) => definition.id === id)))];
+      const legacyDefinitions = await Promise.all(missingIds.map((id) => base44.asServiceRole.entities.QuestDefinition.get(id)));
+      const definitions = [...currentDefinitions, ...legacyDefinitions];
       const rows = await Promise.all(instances.map(async (instance) => ({ ...instance, definition: definitions.find((definition) => definition.id === instance.definition_id), objectives: await base44.asServiceRole.entities.ObjectiveInstance.filter({ quest_instance_id: instance.id }, 'objective_key', 100) })));
       const instancedIds = new Set(instances.filter((instance) => instance.state !== 'ABANDONED').map((instance) => instance.definition_id));
-      return { character, available: definitions.filter((definition) => !instancedIds.has(definition.id)), quests: rows };
+      return { character, available: currentDefinitions.filter((definition) => !instancedIds.has(definition.id)), quests: rows };
     };
     const evaluateVisitObjectives = async (character, locationId, eventRequestId) => {
       const quests = await base44.asServiceRole.entities.QuestInstance.filter({ character_id: character.id, state: 'ACTIVE' }, '-accepted_at', 100);
@@ -55,14 +60,16 @@ Deno.serve(async (req) => {
 
     if (command === 'STUDIO_OVERVIEW') {
       if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
-      const [games, releases, locations, connections, quests] = await Promise.all([
+      const [games, releases, locations, connections, quests, encounters, characters] = await Promise.all([
         base44.asServiceRole.entities.Game.list(),
-        base44.asServiceRole.entities.ContentRelease.list('-created_date', 20),
+        base44.asServiceRole.entities.ContentRelease.list('-created_date', 50),
         base44.asServiceRole.entities.LocationDefinition.list(),
         base44.asServiceRole.entities.Connection.list(),
-        base44.asServiceRole.entities.QuestDefinition.list()
+        base44.asServiceRole.entities.QuestDefinition.list(),
+        base44.asServiceRole.entities.EncounterDefinition.list(),
+        base44.asServiceRole.entities.Character.list('-updated_date', 100)
       ]);
-      return Response.json({ games, releases, counts: { games: games.length, releases: releases.length, locations: locations.length, connections: connections.length, quests: quests.length } });
+      return Response.json({ games, releases, characters, counts: { games: games.length, releases: releases.length, locations: locations.length, connections: connections.length, quests: quests.length, encounters: encounters.length } });
     }
 
     if (command === 'CREATE_CHARACTER') {

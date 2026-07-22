@@ -1,0 +1,33 @@
+{
+  "name": "CharacterSnapshot",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "created_by_user_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "game_id",
+    "character_id",
+    "content_version",
+    "reason",
+    "state",
+    "created_by_user_id"
+  ]
+}
