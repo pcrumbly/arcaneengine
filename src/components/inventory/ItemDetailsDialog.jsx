@@ -3,6 +3,7 @@ import { LoaderCircle } from 'lucide-react';
 import InventoryStackActions from '@/components/inventory/InventoryStackActions';
 import ItemComparison from '@/components/inventory/ItemComparison';
 import ItemCapabilities from '@/components/inventory/ItemCapabilities';
+import ItemRequirements from '@/components/inventory/ItemRequirements';
 
 export default function ItemDetailsDialog({ item, items, containers, busy, onClose, onAction }) {
   if (!item) return null;
@@ -10,6 +11,7 @@ export default function ItemDetailsDialog({ item, items, containers, busy, onClo
   return <Dialog open onOpenChange={(open) => !open && onClose()}><DialogContent className="border-white/10 bg-[#0a1728] text-slate-100 sm:max-w-lg"><DialogHeader><DialogTitle>{definition.name}</DialogTitle><DialogDescription className="text-slate-400">{definition.description}</DialogDescription></DialogHeader>
     <dl className="grid grid-cols-2 gap-3 rounded-md border border-white/10 p-3 text-sm"><Stat label="Category" value={definition.category}/><Stat label="Quantity" value={item.quantity}/><Stat label="Weight" value={definition.weight || 0}/><Stat label="Value" value={definition.value || 0}/><Stat label="Quality" value={item.quality}/><Stat label="Container" value={item.container?.name || 'Unknown'}/></dl>
     <ItemComparison item={item} items={items}/>
+    <ItemRequirements item={item}/>
     {!!definition.modifiers?.length && <div><p className="mb-2 text-xs uppercase tracking-wider text-slate-500">Modifiers</p>{definition.modifiers.map((modifier, index) => <p key={index} className="text-sm text-emerald-300">{modifier.attributeId}: {modifier.amount > 0 ? '+' : ''}{modifier.amount}</p>)}</div>}
     <ItemCapabilities item={item}/>
     <InventoryStackActions item={item} items={items} containers={containers} busy={busy} onAction={onAction}/>

@@ -37,7 +37,8 @@ Deno.serve(async (req) => {
       const definitions = await Promise.all(definitionIds.map((id) => base44.asServiceRole.entities.ItemDefinition.get(id)));
       const abilityIds = [...new Set(definitions.flatMap((definition) => definition.granted_ability_ids || []))];
       const abilities = await Promise.all(abilityIds.map((id) => base44.asServiceRole.entities.AbilityDefinition.get(id)));
-      const rows = items.map((item) => { const definition = definitions.find((current) => current.id === item.definition_id); return { ...item, definition, granted_abilities: (definition.granted_ability_ids || []).map((id) => abilities.find((ability) => ability.id === id)).filter(Boolean), container: containers.find((container) => container.id === item.container_id) || null }; });
+      const requirementResults = await Promise.all(definitions.map((definition) => evaluateCondition(base44, { character }, definition.requirements)));
+      const rows = items.map((item) => { const definitionIndex = definitions.findIndex((current) => current.id === item.definition_id), definition = definitions[definitionIndex]; return { ...item, definition, requirements_met: requirementResults[definitionIndex], granted_abilities: (definition.granted_ability_ids || []).map((id) => abilities.find((ability) => ability.id === id)).filter(Boolean), container: containers.find((container) => container.id === item.container_id) || null }; });
       const carried = rows.filter((item) => item.container?.container_type !== 'loot');
       const loot = rows.filter((item) => item.container?.container_type === 'loot');
       const weight = carried.reduce((sum, item) => sum + (item.definition.weight || 0) * item.quantity, 0);
