@@ -1,0 +1,43 @@
+{
+  "name": "DomainEvent",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string"
+    },
+    "aggregate_type": {
+      "type": "string"
+    },
+    "aggregate_id": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "game_id",
+    "event_type",
+    "aggregate_type",
+    "aggregate_id",
+    "request_id",
+    "occurred_at"
+  ]
+}

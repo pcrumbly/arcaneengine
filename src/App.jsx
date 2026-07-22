@@ -8,6 +8,7 @@ import AppShell from '@/components/runtime/AppShell';
 import Home from '@/pages/Home';
 import Studio from '@/pages/Studio';
 import Inventory from '@/pages/Inventory';
+import Quests from '@/pages/Quests';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -50,6 +51,7 @@ const AuthenticatedApp = () => {
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<AppShell />}>
           <Route path="/" element={<Home />} />
+          <Route path="/quests" element={<Quests />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/studio" element={<Studio />} />
         </Route>

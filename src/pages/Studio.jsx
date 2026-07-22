@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Boxes, GitBranch, Map, PackageCheck } from 'lucide-react';
 
-const cards = [{key:'games',label:'Games',icon:Boxes},{key:'releases',label:'Releases',icon:PackageCheck},{key:'locations',label:'Locations',icon:Map},{key:'connections',label:'Connections',icon:GitBranch}];
+const cards = [{key:'games',label:'Games',icon:Boxes},{key:'releases',label:'Releases',icon:PackageCheck},{key:'locations',label:'Locations',icon:Map},{key:'quests',label:'Quests',icon:GitBranch}];
 export default function Studio() {
   const [data, setData] = useState(null);
   useEffect(() => { base44.functions.invoke('runtimeCommand', { command: 'STUDIO_OVERVIEW' }).then((response) => setData(response.data)); }, []);

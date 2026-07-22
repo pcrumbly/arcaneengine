@@ -1,0 +1,82 @@
+{
+  "name": "QuestDefinition",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "availability_conditions": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "objective_graph": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "completion_rules": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "failure_rules": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "rewards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "repeatability": {
+      "type": "string",
+      "enum": [
+        "never",
+        "repeatable",
+        "scheduled"
+      ],
+      "default": "never"
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "visible",
+        "discovered",
+        "hidden"
+      ],
+      "default": "visible"
+    },
+    "journal": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "key",
+    "name",
+    "objective_graph"
+  ]
+}

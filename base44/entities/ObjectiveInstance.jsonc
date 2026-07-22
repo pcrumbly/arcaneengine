@@ -1,0 +1,58 @@
+{
+  "name": "ObjectiveInstance",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "quest_instance_id": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "objective_key": {
+      "type": "string"
+    },
+    "objective_type": {
+      "type": "string"
+    },
+    "target_id": {
+      "type": "string"
+    },
+    "required_count": {
+      "type": "number",
+      "default": 1
+    },
+    "current_count": {
+      "type": "number",
+      "default": 0
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "ACTIVE",
+        "COMPLETED",
+        "FAILED",
+        "SKIPPED"
+      ],
+      "default": "ACTIVE"
+    },
+    "optional": {
+      "type": "boolean",
+      "default": false
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "quest_instance_id",
+    "character_id",
+    "objective_key",
+    "objective_type",
+    "state"
+  ]
+}

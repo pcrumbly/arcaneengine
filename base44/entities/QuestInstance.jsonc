@@ -1,0 +1,61 @@
+{
+  "name": "QuestInstance",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "definition_id": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "AVAILABLE",
+        "ACTIVE",
+        "COMPLETED",
+        "FAILED",
+        "ABANDONED"
+      ],
+      "default": "ACTIVE"
+    },
+    "accepted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "branch_state": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "reward_state": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "granted",
+        "none"
+      ],
+      "default": "pending"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "definition_id",
+    "character_id",
+    "state"
+  ]
+}
