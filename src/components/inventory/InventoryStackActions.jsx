@@ -1,0 +1,13 @@
+import { useMemo, useState } from 'react';
+
+export default function InventoryStackActions({item,items,containers,busy,onAction}){
+  const [quantity,setQuantity]=useState(1),[containerId,setContainerId]=useState('');
+  const compatible=useMemo(()=>(items||[]).filter(row=>row.id!==item.id&&row.container_id===item.container_id&&!row.equipped_slot&&row.definition_id===item.definition_id&&row.quality===item.quality&&row.durability===item.durability&&row.bound_state===item.bound_state&&JSON.stringify(row.custom_properties||{})===JSON.stringify(item.custom_properties||{})&&JSON.stringify(row.applied_modifications||[])===JSON.stringify(item.applied_modifications||[])),[item,items]);
+  const destinations=(containers||[]).filter(container=>container.id!==item.container_id);
+  if(item.equipped_slot)return null;
+  return <div className="space-y-3 border-t border-white/10 pt-4"><p className="text-xs uppercase tracking-wider text-slate-500">Stack & storage</p>
+    {item.quantity>1&&item.definition.stack_limit>1&&<div className="flex gap-2"><input aria-label="Split quantity" type="number" min="1" max={item.quantity-1} value={quantity} onChange={e=>setQuantity(Number(e.target.value))} className="min-w-0 flex-1 rounded border border-white/10 bg-runtime px-3 py-2 text-sm"/><button disabled={busy||quantity<1||quantity>=item.quantity} onClick={()=>onAction('SPLIT_ITEM',{quantity})} className="rounded border border-white/10 px-3 py-2 text-sm disabled:opacity-40">Split stack</button></div>}
+    {!!compatible.length&&<div className="flex flex-wrap gap-2">{compatible.map(target=><button key={target.id} disabled={busy||target.quantity+item.quantity>item.definition.stack_limit} onClick={()=>onAction('MERGE_ITEM',{targetItemId:target.id,targetItemVersion:target.version})} className="rounded border border-white/10 px-3 py-2 text-sm disabled:opacity-40">Merge with stack of {target.quantity}</button>)}</div>}
+    {!!destinations.length&&<div className="flex gap-2"><select value={containerId} onChange={e=>setContainerId(e.target.value)} className="min-w-0 flex-1 rounded border border-white/10 bg-runtime px-3 py-2 text-sm"><option value="">Move to container…</option>{destinations.map(container=><option key={container.id} value={container.id}>{container.name}</option>)}</select><button disabled={busy||!containerId} onClick={()=>onAction('TRANSFER_ITEM',{containerId})} className="rounded border border-white/10 px-3 py-2 text-sm disabled:opacity-40">Move</button></div>}
+  </div>;
+}

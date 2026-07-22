@@ -9,6 +9,7 @@ import { handlePartyCommand, isMovementLocked, movePartyWithLeader } from '../..
 import { handleStudioAuthoringCommand } from '../../shared/studio.ts';
 import { handleCapabilityCommand } from '../../shared/capabilities.ts';
 import { claimQuestReward, createObjectiveRows, publishQuestEvent, selectQuestBranch } from '../../shared/quests.ts';
+import { handleInventoryCommand } from '../../shared/inventory.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -33,7 +34,7 @@ Deno.serve(async (req) => {
       const containers = await base44.asServiceRole.entities.Container.filter({ character_id: character.id }, 'name', 30);
       const items = await base44.asServiceRole.entities.ItemInstance.filter({ character_id: character.id }, '-acquired_at', 200);
       const definitions = await Promise.all(items.map((item) => base44.asServiceRole.entities.ItemDefinition.get(item.definition_id)));
-      const rows = items.map((item, index) => ({ ...item, definition: definitions[index] }));
+      const rows = items.map((item, index) => ({ ...item, definition: definitions[index], container: containers.find((container) => container.id === item.container_id) || null }));
       const weight = rows.reduce((sum, item) => sum + (item.definition.weight || 0) * item.quantity, 0);
       const capacity = containers.reduce((sum, container) => sum + (container.capacity || 0), 0);
       return { character, containers, items: rows, summary: { weight, capacity, equipped: rows.filter((item) => item.equipped_slot).length } };
@@ -83,6 +84,12 @@ Deno.serve(async (req) => {
     }
 
     if (command === 'GET_INVENTORY') return Response.json(await loadInventory(body.characterId));
+    if (['SPLIT_ITEM','MERGE_ITEM','TRANSFER_ITEM'].includes(command)) {
+      const character = await base44.entities.Character.get(body.characterId);
+      const result = await handleInventoryCommand(base44, user, character, body, requestId);
+      if (result) return result;
+      return Response.json(await loadInventory(character.id));
+    }
     if (command === 'GET_QUESTS') return Response.json(await loadQuests(body.characterId));
     if (command === 'SELECT_QUEST_BRANCH' || command === 'SELECT_QUEST_REWARD') {
       const character = await base44.entities.Character.get(body.characterId);

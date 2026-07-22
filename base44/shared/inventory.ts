@@ -1,0 +1,24 @@
+function stackSignature(item:any){return JSON.stringify([item.definition_id,item.quality,item.durability,item.bound_state,item.custom_properties||{},item.applied_modifications||[]]);}
+async function ownedItem(base44:any,character:any,itemId:string,itemVersion:number){const item=await base44.asServiceRole.entities.ItemInstance.get(itemId);if(item.character_id!==character.id)return {response:Response.json({error:'Item ownership could not be verified.'},{status:403})};if(item.version!==itemVersion)return {response:Response.json({error:'Item state changed. Refresh and try again.'},{status:409})};return {item};}
+export async function handleInventoryCommand(base44:any,user:any,character:any,body:any,requestId:string){
+  const duplicate=await base44.asServiceRole.entities.AuditEvent.filter({actor_user_id:user.id,request_id:requestId,result:'accepted'},'-occurred_at',1);if(duplicate.length)return null;
+  const sourceResult=await ownedItem(base44,character,body.itemId,body.itemVersion);if(sourceResult.response)return sourceResult.response;const item=sourceResult.item;
+  if(item.equipped_slot)return Response.json({error:'Unequip this item before changing its stack or container.'},{status:422});
+  const definition=await base44.asServiceRole.entities.ItemDefinition.get(item.definition_id);
+  if(body.command==='SPLIT_ITEM'){
+    const quantity=Number(body.quantity);if(!Number.isInteger(quantity)||quantity<1||quantity>=item.quantity)return Response.json({error:'Split quantity must be less than the current stack.'},{status:422});if(Number(definition.stack_limit||1)<=1)return Response.json({error:'This item cannot be stacked.'},{status:422});
+    await base44.asServiceRole.entities.ItemInstance.update(item.id,{quantity:item.quantity-quantity,version:item.version+1});
+    await base44.asServiceRole.entities.ItemInstance.create({game_id:item.game_id,content_version:item.content_version,definition_id:item.definition_id,container_id:item.container_id,character_id:item.character_id,quantity,durability:item.durability,quality:item.quality,bound_state:item.bound_state,custom_properties:item.custom_properties||{},applied_modifications:item.applied_modifications||[],acquired_at:new Date().toISOString(),version:1});
+  }
+  if(body.command==='MERGE_ITEM'){
+    const targetResult=await ownedItem(base44,character,body.targetItemId,body.targetItemVersion);if(targetResult.response)return targetResult.response;const target=targetResult.item;if(target.id===item.id||target.container_id!==item.container_id||target.equipped_slot||stackSignature(target)!==stackSignature(item))return Response.json({error:'Those item stacks cannot be merged.'},{status:422});
+    const total=Number(item.quantity)+Number(target.quantity);if(total>Number(definition.stack_limit||1))return Response.json({error:'The merged stack would exceed its stack limit.'},{status:422});
+    await base44.asServiceRole.entities.ItemInstance.update(target.id,{quantity:total,version:target.version+1});await base44.asServiceRole.entities.ItemInstance.delete(item.id);
+  }
+  if(body.command==='TRANSFER_ITEM'){
+    const container=await base44.asServiceRole.entities.Container.get(body.containerId);if(container.character_id!==character.id||container.game_id!==character.game_id)return Response.json({error:'Container access could not be verified.'},{status:403});if(container.id===item.container_id)return Response.json({error:'The item is already in that container.'},{status:422});
+    const targetItems=await base44.asServiceRole.entities.ItemInstance.filter({character_id:character.id,container_id:container.id},'-created_date',200),definitions=await Promise.all(targetItems.map((row:any)=>base44.asServiceRole.entities.ItemDefinition.get(row.definition_id))),weight=targetItems.reduce((sum:number,row:any,index:number)=>sum+Number(definitions[index].weight||0)*Number(row.quantity||0),0)+Number(definition.weight||0)*Number(item.quantity||0);if(Number(container.capacity||0)>0&&weight>Number(container.capacity))return Response.json({error:'That container does not have enough capacity.'},{status:422});
+    await base44.asServiceRole.entities.ItemInstance.update(item.id,{container_id:container.id,version:item.version+1});
+  }
+  await base44.asServiceRole.entities.AuditEvent.create({game_id:character.game_id,actor_user_id:user.id,character_id:character.id,command:body.command,request_id:requestId,result:'accepted',details:{item_id:item.id,target_item_id:body.targetItemId||null,container_id:body.containerId||item.container_id,quantity:body.quantity||item.quantity},occurred_at:new Date().toISOString()});return null;
+}
