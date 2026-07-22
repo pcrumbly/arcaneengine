@@ -2,6 +2,7 @@ import { evaluateCondition, resolveCombatEffect } from './rules.ts';
 import { getPartyContext } from './party.ts';
 import { resolveCharacterCapabilities } from './capabilities.ts';
 import { publishQuestEvent } from './quests.ts';
+import { grantItemReward } from './inventory.ts';
 const LIVE_STATES = ['CREATED','AWAITING_PARTICIPANTS','ROUND_START','AWAITING_ACTIONS','RESOLVING_ACTIONS','ROUND_END'];
 const hashSeed = (value:string) => [...value].reduce((hash, char) => Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0, 2166136261);
 const randomAt = (seed:number, cursor:number) => { let x = (seed + Math.imul(cursor + 1, 0x6D2B79F5)) >>> 0; x = Math.imul(x ^ x >>> 15, x | 1); x ^= x + Math.imul(x ^ x >>> 7, x | 61); return ((x ^ x >>> 14) >>> 0) / 4294967296; };
@@ -93,6 +94,7 @@ async function resolveAction(base44:any, combat:any, actor:any, target:any, abil
 
 async function conclude(base44:any, combat:any, character:any) {
   const participants = await base44.asServiceRole.entities.CombatParticipant.filter({ combat_instance_id: combat.id }, '-initiative', 30);
+  let cursor=Number(combat.rng_cursor||0);const grantedRewards:any[]=[];
   const playerAlive = participants.some((item:any) => item.team === 'player' && item.status === 'active');
   const enemiesAlive = participants.some((item:any) => item.team !== 'player' && item.status === 'active');
   if (playerAlive && enemiesAlive) return combat;
@@ -101,12 +103,13 @@ async function conclude(base44:any, combat:any, character:any) {
   for (const participant of participants.filter((item:any)=>item.team==='player'&&item.character_id)) {
     const member = await base44.asServiceRole.entities.Character.get(participant.character_id);
     const patch:any = { resources:{...(member.resources||{}),...(participant.resources||{})}, version:member.version+1 };
-    if (member.id===character.id && state==='VICTORY' && !combat.rewards_granted) { const currency={...(member.currency||{})}; for(const reward of encounter.rewards||[])if(reward.type==='currency')currency[reward.currencyId]=(currency[reward.currencyId]||0)+Number(reward.amount||0); patch.currency=currency; }
+    if (member.id===character.id && state==='VICTORY' && !combat.rewards_granted) { const currency={...(member.currency||{})}; for(const [rewardIndex,reward] of (encounter.rewards||[]).entries()){cursor+=1;const chance=Math.min(1,Math.max(0,Number(reward.chance??1)));if(randomAt(combat.seed,cursor)>chance)continue;if(reward.type==='currency'){const amount=Number(reward.amount||0);currency[reward.currencyId]=(currency[reward.currencyId]||0)+amount;grantedRewards.push({type:'currency',currency_id:reward.currencyId,amount});}if(reward.type==='item'){const granted=await grantItemReward(base44,member,reward);grantedRewards.push(granted);await publishQuestEvent(base44,member,'inventory.item.added','item',granted.item_definition_id,`combat-${combat.id}:loot:${rewardIndex}`,{item_definition_id:granted.item_definition_id,quantity:granted.quantity,source_combat_id:combat.id});}} patch.currency=currency; }
     await base44.asServiceRole.entities.Character.update(member.id,patch);
   }
   if (state === 'VICTORY' && !combat.rewards_granted) for(const participant of participants.filter((item:any)=>item.team==='player'&&item.character_id)){const member=await base44.asServiceRole.entities.Character.get(participant.character_id);for(const defeated of participants.filter((item:any)=>item.team!=='player'&&item.status==='incapacitated'))await publishQuestEvent(base44,member,'combat.entity.defeated','combat',combat.id,`combat-${combat.id}:defeated:${defeated.id}`,{entity_definition_id:defeated.source_definition_id||'',participant_id:defeated.id});await publishQuestEvent(base44,member,'combat.encounter.won','combat',combat.id,`combat-${combat.id}`,{encounter_definition_id:encounter.id,party_id:combat.party_id||null});}
+  if(grantedRewards.length){const prior=await base44.asServiceRole.entities.CombatEvent.filter({combat_instance_id:combat.id},'-sequence',1);await base44.asServiceRole.entities.CombatEvent.create({game_id:combat.game_id,combat_instance_id:combat.id,sequence:(prior[0]?.sequence||0)+1,event_type:'rewards.granted',payload:{rewards:grantedRewards},rng_cursor:cursor,occurred_at:new Date().toISOString()});}
   if(combat.party_id){const party=await base44.asServiceRole.entities.Party.get(combat.party_id);await base44.asServiceRole.entities.Party.update(party.id,{state:'active',version:party.version+1});}
-  return await base44.asServiceRole.entities.CombatInstance.update(combat.id, { state, rewards_granted: state === 'VICTORY', active_participant_id: null, version: combat.version + 1 });
+  return await base44.asServiceRole.entities.CombatInstance.update(combat.id, { state, rewards_granted: state === 'VICTORY', active_participant_id: null, rng_cursor:cursor, version: combat.version + 1 });
 }
 
 export async function handleCombatCommand(base44:any, user:any, body:any, requestId:string) {
