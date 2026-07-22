@@ -1,0 +1,50 @@
+{
+  "name": "Connection",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "from_location_id": {
+      "type": "string"
+    },
+    "to_location_id": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "travel_time": {
+      "type": "number",
+      "default": 0
+    },
+    "resource_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "one_way": {
+      "type": "boolean",
+      "default": false
+    },
+    "required_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "from_location_id",
+    "to_location_id",
+    "label"
+  ]
+}

@@ -1,0 +1,8 @@
+import { ArrowRight, Clock3, LoaderCircle, Map } from 'lucide-react';
+
+export default function LocationPanel({ location, exits, busy, onMove }) {
+  return <section className="rounded-lg border border-white/10 bg-[#0a1728]">
+    <div className="border-b border-white/10 p-5"><p className="text-xs uppercase tracking-[.22em] text-cyan-400">{location.location_type}</p><h2 className="mt-1 text-2xl font-semibold">{location.name}</h2><p className="mt-3 max-w-3xl leading-7 text-slate-400">{location.description || 'No description is defined for this location.'}</p></div>
+    <div className="p-5"><div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Map size={16} className="text-cyan-400"/> Available exits</div><div className="grid gap-2">{exits.length ? exits.map((exit) => <button key={exit.id} disabled={busy} onClick={() => onMove(exit)} className="group flex items-center justify-between rounded-md border border-white/10 bg-white/[.025] p-3 text-left hover:border-cyan-400/40 hover:bg-cyan-400/5 disabled:opacity-50 transition-all"><span><strong className="block text-sm">{exit.label}</strong><span className="text-xs text-slate-500">{exit.destination.name} · {exit.destination.location_type}</span></span><span className="flex items-center gap-2 text-xs text-slate-500">{busy ? <LoaderCircle size={16} className="animate-spin"/> : <><Clock3 size={13}/>{exit.travel_time || 0}m <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform"/></>}</span></button>) : <p className="rounded-md border border-dashed border-white/10 p-4 text-sm text-slate-500">No valid exits are defined.</p>}</div></div>
+  </section>;
+}

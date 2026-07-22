@@ -1,0 +1,52 @@
+{
+  "name": "Game",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "published",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "terminology": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "theme": {
+      "type": "object",
+      "properties": {
+        "accent": {
+          "type": "string"
+        },
+        "surface": {
+          "type": "string"
+        }
+      }
+    },
+    "enabled_modules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "key",
+    "title",
+    "status"
+  ]
+}

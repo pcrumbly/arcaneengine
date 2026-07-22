@@ -88,5 +88,11 @@
 
   body {
     @apply bg-background text-foreground font-body;
+    margin: 0;
+    min-width: 320px;
+  }
+
+  button, a, input, select {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950;
   }
 }

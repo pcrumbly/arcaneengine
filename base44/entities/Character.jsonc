@@ -1,0 +1,61 @@
+{
+  "name": "Character",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "current_location_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "in_combat",
+        "inactive"
+      ],
+      "default": "active"
+    },
+    "attributes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "currency": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "name",
+    "current_location_id"
+  ]
+}

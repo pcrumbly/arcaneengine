@@ -1,0 +1,38 @@
+{
+  "name": "ContentRelease",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "validating",
+        "published",
+        "retired"
+      ],
+      "default": "draft"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "validation_summary": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "game_id",
+    "version",
+    "status"
+  ]
+}

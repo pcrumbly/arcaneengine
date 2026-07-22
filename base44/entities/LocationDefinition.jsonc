@@ -1,0 +1,46 @@
+{
+  "name": "LocationDefinition",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "location_type": {
+      "type": "string"
+    },
+    "parent_location_id": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "available_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "key",
+    "name",
+    "location_type"
+  ]
+}

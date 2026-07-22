@@ -1,0 +1,43 @@
+{
+  "name": "AuditEvent",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "actor_user_id": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "command": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "result": {
+      "type": "string",
+      "enum": [
+        "accepted",
+        "rejected"
+      ]
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "actor_user_id",
+    "command",
+    "request_id",
+    "result",
+    "occurred_at"
+  ]
+}
