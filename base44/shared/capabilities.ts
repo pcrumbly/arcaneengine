@@ -13,15 +13,17 @@ async function capabilityData(base44:any,character:any){
   const unlocked=new Set(abilities.filter((ability:any)=>ability.tags?.includes('basic')).map((ability:any)=>ability.id));
   for(const row of skillRows)if(Number(row.record?.rank||0)>0)for(const id of row.definition.granted_ability_ids||[])unlocked.add(id);
   for(const item of inventory)if(item.equipped_slot)for(const id of item.definition.granted_ability_ids||[])unlocked.add(id);
+  const available=new Set(unlocked);for(const item of inventory)for(const id of item.definition.granted_ability_ids||[])available.add(id);
   const activeLoadout=loadouts.find((loadout:any)=>loadout.is_active)||null;
   const selected=activeLoadout?.active_ability_ids?.length?activeLoadout.active_ability_ids.filter((id:string)=>unlocked.has(id)):[...unlocked];
   const fallback=abilities.filter((ability:any)=>ability.tags?.includes('basic')).map((ability:any)=>ability.id);
-  return {definitions,records,skillRows,abilities,inventory,loadouts,activeLoadout,unlockedIds:[...unlocked],activeAbilityIds:selected.length?selected:(fallback.length?fallback:abilities.slice(0,1).map((ability:any)=>ability.id))};
+  return {definitions,records,skillRows,abilities,inventory,loadouts,activeLoadout,unlockedIds:[...unlocked],availableIds:[...available],activeAbilityIds:selected.length?selected:(fallback.length?fallback:abilities.slice(0,1).map((ability:any)=>ability.id))};
 }
 export async function resolveCharacterCapabilities(base44:any,character:any){return await capabilityData(base44,character);}
-async function load(base44:any,character:any){const data=await capabilityData(base44,character);return {character,skills:data.skillRows,abilities:data.abilities.filter((ability:any)=>data.unlockedIds.includes(ability.id)),items:data.inventory,loadouts:data.loadouts,activeLoadout:data.activeLoadout};}
+async function load(base44:any,character:any){const data=await capabilityData(base44,character);return {character,skills:data.skillRows,abilities:data.abilities.filter((ability:any)=>data.availableIds.includes(ability.id)),items:data.inventory,loadouts:data.loadouts,activeLoadout:data.activeLoadout};}
 async function validateLoadout(base44:any,character:any,values:any){
   const data=await capabilityData(base44,character),unlocked=new Set(data.unlockedIds),items=new Map(data.inventory.map((item:any)=>[item.id,item]));
+  for(const itemId of Object.values(values.equipment_assignments||{})){const assigned:any=items.get(itemId);for(const id of assigned?.definition.granted_ability_ids||[])unlocked.add(id);}
   for(const id of values.active_ability_ids||[])if(!unlocked.has(id))throw new Error('A selected ability is not available to this character.');
   for(const id of values.quick_slots||[])if(!items.has(id))throw new Error('A quick-slot item does not belong to this character.');
   for(const [slot,id] of Object.entries(values.equipment_assignments||{})){const item:any=items.get(id);if(!item||(item.definition.equipment_slots||[]).includes(slot)===false)throw new Error(`The equipment assigned to ${slot} is invalid.`);}
