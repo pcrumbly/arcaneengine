@@ -1,4 +1,4 @@
-const contentTypes = ['LocationDefinition','Connection','NPCDefinition','NPCInstance','NPCPlacement','DialogueGraph','QuestDefinition','ItemDefinition','AbilityDefinition','EncounterDefinition','AttributeDefinition','FormulaDefinition','EffectDefinition','StatusDefinition'];
+const contentTypes = ['LocationDefinition','Connection','NPCDefinition','NPCInstance','NPCPlacement','DialogueGraph','QuestDefinition','ItemDefinition','AbilityDefinition','EncounterDefinition','AttributeDefinition','SkillDefinition','FormulaDefinition','EffectDefinition','StatusDefinition'];
 const reserved = new Set(['id','game_id','content_version','created_date','updated_date','created_by_id']);
 const gameFields = ['title','description','terminology','theme','enabled_modules','navigation','header_indicators','character_defaults','rules'];
 const clean = (values:any) => Object.fromEntries(Object.entries(values || {}).filter(([key]) => !reserved.has(key)));

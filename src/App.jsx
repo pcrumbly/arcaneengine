@@ -8,6 +8,7 @@ import AppShell from '@/components/runtime/AppShell';
 import Home from '@/pages/Home';
 import Studio from '@/pages/Studio';
 import Inventory from '@/pages/Inventory';
+import Skills from '@/pages/Skills';
 import Quests from '@/pages/Quests';
 import Combat from '@/pages/Combat';
 import Party from '@/pages/Party';
@@ -56,6 +57,7 @@ const AuthenticatedApp = () => {
           <Route path="/" element={<Home />} />
           <Route path="/quests" element={<Quests />} />
           <Route path="/inventory" element={<Inventory />} />
+          <Route path="/skills" element={<Skills />} />
           <Route path="/party" element={<Party />} />
           <Route path="/combat" element={<Combat />} />
           <Route path="/studio" element={<Studio />} />

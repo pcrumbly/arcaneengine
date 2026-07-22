@@ -1,5 +1,5 @@
 {
-  "name": "Loadout",
+  "name": "SkillDefinition",
   "type": "object",
   "properties": {
     "game_id": {
@@ -8,50 +8,50 @@
     "content_version": {
       "type": "string"
     },
-    "character_id": {
+    "key": {
       "type": "string"
     },
     "name": {
       "type": "string"
     },
-    "is_active": {
-      "type": "boolean",
-      "default": false
+    "description": {
+      "type": "string"
     },
-    "equipment_assignments": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "string"
-      }
+    "category": {
+      "type": "string"
     },
-    "active_ability_ids": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+    "max_rank": {
+      "type": "number",
+      "default": 1
     },
-    "quick_slots": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "tactical_preferences": {
+    "requirements": {
       "type": "object",
       "additionalProperties": true
     },
-    "formation_position": {
-      "type": "string"
+    "training_costs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
     },
-    "version": {
-      "type": "number",
-      "default": 1
+    "granted_ability_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "required": [
     "game_id",
     "content_version",
-    "character_id",
-    "name"
+    "key",
+    "name",
+    "max_rank"
   ]
 }
