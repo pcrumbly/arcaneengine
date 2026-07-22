@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { handleCombatCommand } from '../../shared/combat.ts';
+import { handleSettingsCommand } from '../../shared/settings.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -10,6 +11,7 @@ Deno.serve(async (req) => {
     const command = body.command;
     const requestId = body.requestId || crypto.randomUUID();
     if (['GET_COMBAT','START_ENCOUNTER','SELECT_COMBAT_ACTION','COMPLETE_COMBAT'].includes(command)) return await handleCombatCommand(base44, user, body, requestId);
+    if (['GET_SETTINGS','SAVE_SETTINGS','SAVE_KEY_BINDING','RESET_KEY_BINDINGS'].includes(command)) return await handleSettingsCommand(base44, user, body);
     const loadInventory = async (characterId) => {
       const character = await base44.entities.Character.get(characterId);
       const containers = await base44.asServiceRole.entities.Container.filter({ character_id: character.id }, 'name', 30);

@@ -1,16 +1,19 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, PanelsTopLeft, PackageSearch, ScrollText, Swords, LogOut } from 'lucide-react';
+import { LayoutDashboard, PanelsTopLeft, PackageSearch, ScrollText, Settings, Swords, LogOut } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import useRuntimeShortcuts from '@/hooks/useRuntimeShortcuts';
 
 const links = [
   { to: '/', label: 'Runtime', icon: LayoutDashboard },
   { to: '/quests', label: 'Quests', icon: ScrollText },
   { to: '/inventory', label: 'Inventory', icon: PackageSearch },
   { to: '/combat', label: 'Combat', icon: Swords },
-  { to: '/studio', label: 'Game Studio', icon: PanelsTopLeft }
+  { to: '/studio', label: 'Game Studio', icon: PanelsTopLeft },
+  { to: '/settings', label: 'Settings', icon: Settings }
 ];
 
 export default function AppShell() {
+  useRuntimeShortcuts();
   return <div className="min-h-screen bg-[#07111f] text-slate-100">
     <header className="h-16 border-b border-white/10 bg-[#0a1728] px-4 sm:px-6 flex items-center justify-between">
       <div><p className="text-[10px] uppercase tracking-[.28em] text-cyan-400">Agnostic engine</p><h1 className="font-semibold tracking-tight">RPG Runtime</h1></div>
@@ -22,6 +25,6 @@ export default function AppShell() {
       </aside>
       <main className="min-w-0 flex-1 pb-16 md:pb-0"><Outlet/></main>
     </div>
-    <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-white/10 bg-[#0a1728] md:hidden">{links.map(({to,label,icon:Icon}) => <NavLink key={to} to={to} end={to === '/'} className={({isActive}) => `flex flex-col items-center gap-1 py-2 text-[10px] ${isActive ? 'text-cyan-300' : 'text-slate-500'}`}><Icon size={17}/>{label}</NavLink>)}</nav>
+    <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-white/10 bg-[#0a1728] md:hidden">{links.map(({to,label,icon:Icon}) => <NavLink key={to} to={to} end={to === '/'} className={({isActive}) => `flex flex-col items-center gap-1 py-2 text-[10px] ${isActive ? 'text-cyan-300' : 'text-slate-500'}`}><Icon size={17}/>{label}</NavLink>)}</nav>
   </div>;
 }

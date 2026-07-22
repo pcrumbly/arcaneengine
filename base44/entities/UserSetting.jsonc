@@ -1,0 +1,31 @@
+{
+  "name": "UserSetting",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "player",
+        "game",
+        "sound",
+        "accessibility"
+      ]
+    },
+    "values": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "user_id",
+    "scope",
+    "values"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "KeyBinding",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "command_id": {
+      "type": "string"
+    },
+    "binding": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "user_id",
+    "command_id",
+    "binding",
+    "category"
+  ]
+}

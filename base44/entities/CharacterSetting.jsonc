@@ -1,0 +1,29 @@
+{
+  "name": "CharacterSetting",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "string"
+    },
+    "values": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "character_id",
+    "scope",
+    "values"
+  ]
+}

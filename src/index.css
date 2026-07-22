@@ -95,4 +95,13 @@
   button, a, input, select {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950;
   }
+
+  .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .high-contrast { filter: contrast(1.18); }
+  .larger-text { font-size: 112.5%; }
 }

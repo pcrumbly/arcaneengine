@@ -1,0 +1,2 @@
+const tabs = ['preferences','sound','shortcuts'];
+export default function SettingsTabs({active,onChange}) { return <div role="tablist" aria-label="Settings sections" className="flex gap-1 rounded-md border border-white/10 bg-[#0a1728] p-1">{tabs.map(tab=><button role="tab" aria-selected={active===tab} key={tab} onClick={()=>onChange(tab)} className={`rounded px-4 py-2 text-sm capitalize ${active===tab?'bg-cyan-400 text-slate-950':'text-slate-400 hover:text-white'}`}>{tab}</button>)}</div>; }
