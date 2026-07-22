@@ -21,6 +21,18 @@ async function capabilityData(base44:any,character:any){
 }
 export async function resolveCharacterCapabilities(base44:any,character:any){return await capabilityData(base44,character);}
 async function load(base44:any,character:any){const data=await capabilityData(base44,character);return {character,skills:data.skillRows,abilities:data.abilities.filter((ability:any)=>data.availableIds.includes(ability.id)),items:data.inventory,loadouts:data.loadouts,activeLoadout:data.activeLoadout};}
+async function loadProfile(base44:any,character:any){
+  const [attributeDefinitions,effects,statusDefinitions,skills,skillDefinitions,items]=await Promise.all([
+    base44.asServiceRole.entities.AttributeDefinition.filter({game_id:character.game_id,content_version:character.content_version},'name',200),
+    base44.asServiceRole.entities.ActiveEffect.filter({target_type:'character',target_id:character.id},'-updated_date',200),
+    base44.asServiceRole.entities.StatusDefinition.filter({game_id:character.game_id,content_version:character.content_version},'name',200),
+    base44.asServiceRole.entities.CharacterSkill.filter({character_id:character.id},'-updated_date',200),
+    base44.asServiceRole.entities.SkillDefinition.filter({game_id:character.game_id,content_version:character.content_version},'name',200),
+    base44.asServiceRole.entities.ItemInstance.filter({character_id:character.id},'-updated_date',500)
+  ]);
+  const equipped=items.filter((item:any)=>item.equipped_slot),itemDefinitions=await Promise.all(equipped.map((item:any)=>base44.asServiceRole.entities.ItemDefinition.get(item.definition_id)));
+  return {character,attributeDefinitions,effects:effects.map((effect:any)=>({...effect,definition:statusDefinitions.find((definition:any)=>definition.key===effect.status_key)||null})),skills:skills.map((record:any)=>({...record,definition:skillDefinitions.find((definition:any)=>definition.id===record.skill_definition_id)||null})),equipment:equipped.map((item:any,index:number)=>({...item,definition:itemDefinitions[index]}))};
+}
 async function validateLoadout(base44:any,character:any,values:any){
   const data=await capabilityData(base44,character),unlocked=new Set(data.unlockedIds),items=new Map(data.inventory.map((item:any)=>[item.id,item]));
   for(const itemId of Object.values(values.equipment_assignments||{})){const assigned:any=items.get(itemId);for(const id of assigned?.definition.granted_ability_ids||[])unlocked.add(id);}
@@ -31,6 +43,7 @@ async function validateLoadout(base44:any,character:any,values:any){
 export async function handleCapabilityCommand(base44:any,user:any,body:any,requestId:string){
   const character=await base44.entities.Character.get(body.characterId);
   if(body.command==='GET_CAPABILITIES')return Response.json(await load(base44,character));
+  if(body.command==='GET_CHARACTER_PROFILE')return Response.json(await loadProfile(base44,character));
   if(body.command==='TRAIN_SKILL'){
     const duplicate=await base44.asServiceRole.entities.AuditEvent.filter({actor_user_id:user.id,request_id:requestId,result:'accepted'},'-occurred_at',1);if(duplicate.length)return Response.json(await load(base44,character));
     const definition=await base44.asServiceRole.entities.SkillDefinition.get(body.skillDefinitionId);if(definition.game_id!==character.game_id||definition.content_version!==character.content_version)return Response.json({error:'Skill content is not valid for this character.'},{status:422});

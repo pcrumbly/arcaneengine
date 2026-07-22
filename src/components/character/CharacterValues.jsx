@@ -1,0 +1,4 @@
+export default function CharacterValues({title,values,definitions}){
+  const rows=Object.entries(values||{}),definitionFor=key=>definitions.find(item=>item.key===key);
+  return <section className="rounded-lg border border-white/10 bg-runtime-surface"><div className="border-b border-white/10 p-4"><h3 className="font-semibold">{title}</h3></div><dl className="grid gap-px bg-white/5 sm:grid-cols-2">{rows.map(([key,value])=>{const definition=definitionFor(key);return <div key={key} className="flex items-center justify-between bg-runtime-surface p-4"><div><dt className="text-sm font-medium">{definition?.name||key}</dt><p className="text-xs text-slate-500">{definition?.category||key}</p></div><dd className="font-mono text-lg text-runtime-accent">{value}</dd></div>})}</dl>{!rows.length&&<p className="p-4 text-sm text-slate-500">No values are defined.</p>}</section>;
+}

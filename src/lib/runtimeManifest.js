@@ -1,5 +1,6 @@
 const defaults = [
   { route:'/', label:'Runtime', module:'world', order:10 },
+  { route:'/character', label:'Character', module:'characters', order:15 },
   { route:'/quests', label:'Quests', module:'quests', order:20 },
   { route:'/inventory', label:'Inventory', module:'inventory', order:30 },
   { route:'/skills', label:'Skills', module:'skills', order:35 },
