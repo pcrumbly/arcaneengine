@@ -8,7 +8,7 @@ import { handleDialogueCommand, loadVisibleNpcs } from '../../shared/dialogue.ts
 import { handlePartyCommand, isMovementLocked, movePartyWithLeader } from '../../shared/party.ts';
 import { handleStudioAuthoringCommand } from '../../shared/studio.ts';
 import { handleCapabilityCommand } from '../../shared/capabilities.ts';
-import { claimQuestReward, createObjectiveRows, publishQuestEvent, selectQuestBranch } from '../../shared/quests.ts';
+import { claimQuestReward, createObjectiveRows, publishQuestEvent, refreshQuestProgress, selectQuestBranch } from '../../shared/quests.ts';
 import { handleInventoryCommand } from '../../shared/inventory.ts';
 
 Deno.serve(async (req) => {
@@ -41,6 +41,7 @@ Deno.serve(async (req) => {
     };
     const loadQuests = async (characterId) => {
       const character = await base44.entities.Character.get(characterId);
+      await refreshQuestProgress(base44, character);
       const currentDefinitions = await base44.asServiceRole.entities.QuestDefinition.filter({ game_id: character.game_id, content_version: character.content_version }, 'name', 100);
       const instances = await base44.asServiceRole.entities.QuestInstance.filter({ character_id: character.id }, '-updated_date', 100);
       const missingIds = [...new Set(instances.map((instance) => instance.definition_id).filter((id) => !currentDefinitions.some((definition) => definition.id === id)))];
