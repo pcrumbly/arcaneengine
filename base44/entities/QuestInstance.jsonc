@@ -33,6 +33,14 @@
       "type": "string",
       "format": "date-time"
     },
+    "failed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "branch_state": {
       "type": "object",
       "additionalProperties": true

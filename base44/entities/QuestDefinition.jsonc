@@ -28,11 +28,21 @@
       "type": "object",
       "additionalProperties": true
     },
+    "event_triggers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "completion_rules": {
       "type": "object",
       "additionalProperties": true
     },
     "failure_rules": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "expiration_rules": {
       "type": "object",
       "additionalProperties": true
     },

@@ -11,6 +11,9 @@
     "character_id": {
       "type": "string"
     },
+    "source_definition_id": {
+      "type": "string"
+    },
     "team": {
       "type": "string"
     },

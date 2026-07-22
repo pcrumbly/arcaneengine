@@ -43,6 +43,16 @@
       "type": "boolean",
       "default": false
     },
+    "processed_event_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "last_event_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "version": {
       "type": "number",
       "default": 1

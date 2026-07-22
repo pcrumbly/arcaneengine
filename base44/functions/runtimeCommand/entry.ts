@@ -8,6 +8,7 @@ import { handleDialogueCommand, loadVisibleNpcs } from '../../shared/dialogue.ts
 import { handlePartyCommand, isMovementLocked, movePartyWithLeader } from '../../shared/party.ts';
 import { handleStudioAuthoringCommand } from '../../shared/studio.ts';
 import { handleCapabilityCommand } from '../../shared/capabilities.ts';
+import { createObjectiveRows, publishQuestEvent } from '../../shared/quests.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -44,35 +45,12 @@ Deno.serve(async (req) => {
       const missingIds = [...new Set(instances.map((instance) => instance.definition_id).filter((id) => !currentDefinitions.some((definition) => definition.id === id)))];
       const legacyDefinitions = await Promise.all(missingIds.map((id) => base44.asServiceRole.entities.QuestDefinition.get(id)));
       const definitions = [...currentDefinitions, ...legacyDefinitions];
-      const rows = await Promise.all(instances.map(async (instance) => ({ ...instance, definition: definitions.find((definition) => definition.id === instance.definition_id), objectives: await base44.asServiceRole.entities.ObjectiveInstance.filter({ quest_instance_id: instance.id }, 'objective_key', 100) })));
+      const rows = await Promise.all(instances.map(async (instance) => { const definition = definitions.find((item) => item.id === instance.definition_id), objectives = await base44.asServiceRole.entities.ObjectiveInstance.filter({ quest_instance_id: instance.id }, 'objective_key', 100); return { ...instance, definition, objectives: objectives.map((objective) => ({ ...objective, label: definition?.objective_graph?.objectives?.find((item) => item.key === objective.objective_key)?.label || objective.objective_key })) }; }));
       const instancedIds = new Set(instances.filter((instance) => instance.state !== 'ABANDONED').map((instance) => instance.definition_id));
       const availability = await Promise.all(currentDefinitions.map((definition) => evaluateCondition(base44, { character }, definition.availability_conditions)));
       const availableDefinitions = currentDefinitions.filter((definition, index) => availability[index]);
       return { character, available: availableDefinitions.filter((definition) => !instancedIds.has(definition.id)), quests: rows };
     };
-    const evaluateVisitObjectives = async (character, locationId, eventRequestId) => {
-      const quests = await base44.asServiceRole.entities.QuestInstance.filter({ character_id: character.id, state: 'ACTIVE' }, '-accepted_at', 100);
-      for (const quest of quests) {
-        const objectives = await base44.asServiceRole.entities.ObjectiveInstance.filter({ quest_instance_id: quest.id }, 'objective_key', 100);
-        const matches = objectives.filter((objective) => objective.state === 'ACTIVE' && objective.objective_type === 'visitLocation' && objective.target_id === locationId);
-        if (matches.length) await base44.asServiceRole.entities.ObjectiveInstance.bulkUpdate(matches.map((objective) => ({ id: objective.id, current_count: objective.required_count, state: 'COMPLETED', version: objective.version + 1 })));
-        const remaining = objectives.filter((objective) => !objective.optional && objective.state !== 'COMPLETED' && !matches.some((match) => match.id === objective.id));
-        if (!remaining.length && (matches.length || objectives.every((objective) => objective.optional || objective.state === 'COMPLETED'))) {
-          const definition = await base44.asServiceRole.entities.QuestDefinition.get(quest.definition_id);
-          const freshCharacter = await base44.entities.Character.get(character.id);
-          const currency = { ...(freshCharacter.currency || {}) };
-          const resources = { ...(freshCharacter.resources || {}) };
-          for (const reward of definition.rewards || []) {
-            if (reward.type === 'currency') currency[reward.currencyId] = (currency[reward.currencyId] || 0) + Number(reward.amount || 0);
-            if (reward.type === 'resourceChange') resources[reward.resourceId] = Math.max(0, (resources[reward.resourceId] || 0) + Number(reward.amount || 0));
-          }
-          await base44.entities.Character.update(character.id, { currency, resources, version: freshCharacter.version + 1 });
-          await base44.asServiceRole.entities.QuestInstance.update(quest.id, { state: 'COMPLETED', completed_at: new Date().toISOString(), reward_state: 'granted', version: quest.version + 1 });
-          await base44.asServiceRole.entities.DomainEvent.create({ game_id: character.game_id, character_id: character.id, event_type: 'quest.completed', aggregate_type: 'quest', aggregate_id: quest.id, request_id: eventRequestId, content_version: character.content_version, payload: { definition_id: definition.id }, occurred_at: new Date().toISOString() });
-        }
-      }
-    };
-
     if (command === 'STUDIO_OVERVIEW') {
       if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
       const [games, releases, locations, connections, quests, encounters, characters] = await Promise.all([
@@ -116,12 +94,13 @@ Deno.serve(async (req) => {
         if (!await evaluateCondition(base44, { character }, definition.availability_conditions)) return Response.json({ error: 'This character does not meet the quest requirements.' }, { status: 422 });
         const existing = await base44.asServiceRole.entities.QuestInstance.filter({ character_id: character.id, definition_id: definition.id }, '-created_date', 20);
         if (existing.some((instance) => instance.state !== 'ABANDONED') && definition.repeatability === 'never') return Response.json({ error: 'This quest cannot be accepted again.' }, { status: 409 });
-        const instance = await base44.asServiceRole.entities.QuestInstance.create({ game_id: character.game_id, content_version: character.content_version, definition_id: definition.id, character_id: character.id, state: 'ACTIVE', accepted_at: new Date().toISOString(), branch_state: {}, reward_state: 'pending', version: 1 });
-        const objectives = definition.objective_graph?.objectives || [];
-        if (objectives.length) await base44.asServiceRole.entities.ObjectiveInstance.bulkCreate(objectives.map((objective) => ({ game_id: character.game_id, quest_instance_id: instance.id, character_id: character.id, objective_key: objective.key, objective_type: objective.type, target_id: objective.targetId || '', required_count: objective.count || 1, current_count: 0, state: 'ACTIVE', optional: !!objective.optional, version: 1 })));
-        await base44.asServiceRole.entities.DomainEvent.create({ game_id: character.game_id, character_id: character.id, event_type: 'quest.accepted', aggregate_type: 'quest', aggregate_id: instance.id, request_id: requestId, content_version: character.content_version, payload: { definition_id: definition.id }, occurred_at: new Date().toISOString() });
+        const acceptedAt = new Date(), afterSeconds = Number(definition.expiration_rules?.afterSeconds || 0);
+        const instance = await base44.asServiceRole.entities.QuestInstance.create({ game_id: character.game_id, content_version: character.content_version, definition_id: definition.id, character_id: character.id, state: 'ACTIVE', accepted_at: acceptedAt.toISOString(), expires_at: afterSeconds > 0 ? new Date(acceptedAt.getTime() + afterSeconds * 1000).toISOString() : undefined, branch_state: {}, reward_state: 'pending', version: 1 });
+        const objectiveRows = createObjectiveRows(definition, instance, character);
+        if (objectiveRows.length) await base44.asServiceRole.entities.ObjectiveInstance.bulkCreate(objectiveRows);
+        await publishQuestEvent(base44, character, 'quest.accepted', 'quest', instance.id, requestId, { definition_id: definition.id });
         await base44.asServiceRole.entities.AuditEvent.create({ game_id: character.game_id, actor_user_id: user.id, character_id: character.id, command, request_id: requestId, result: 'accepted', details: { quest_instance_id: instance.id, definition_id: definition.id }, occurred_at: new Date().toISOString() });
-        await evaluateVisitObjectives(character, character.current_location_id, requestId);
+        await publishQuestEvent(base44, character, 'character.location.entered', 'character', character.id, `${requestId}:initial-location`, { location_id: character.current_location_id, to: character.current_location_id });
       }
       return Response.json(await loadQuests(character.id));
     }
@@ -159,6 +138,7 @@ Deno.serve(async (req) => {
           await base44.entities.Character.update(character.id, { ...resolved.patch, version: character.version + 1 });
           if (item.quantity <= 1) await base44.asServiceRole.entities.ItemInstance.delete(item.id);
           else await base44.asServiceRole.entities.ItemInstance.update(item.id, { quantity: item.quantity - 1, version: item.version + 1 });
+          await publishQuestEvent(base44, character, 'inventory.item.used', 'item', item.id, requestId, { item_definition_id: definition.id, quantity: 1 });
         }
         await base44.asServiceRole.entities.AuditEvent.create({ game_id: character.game_id, actor_user_id: user.id, character_id: character.id, command, request_id: requestId, result: 'accepted', details: { item_id: item.id, definition_id: definition.id, slot: body.slot || null }, occurred_at: new Date().toISOString() });
       }
@@ -178,8 +158,7 @@ Deno.serve(async (req) => {
         if (missingTags.length || !await evaluateCondition(base44, { character }, connection.conditions)) return Response.json({ error: 'This character does not meet the route requirements.' }, { status: 422 });
         const movedCharacters = await movePartyWithLeader(base44, character, body.destinationId);
         for (const movedCharacter of movedCharacters) {
-          await base44.asServiceRole.entities.DomainEvent.create({ game_id: movedCharacter.game_id, character_id: movedCharacter.id, event_type: 'character.location.entered', aggregate_type: 'character', aggregate_id: movedCharacter.id, request_id: requestId, content_version: movedCharacter.content_version, payload: { from: movedCharacter.current_location_id, to: body.destinationId }, occurred_at: new Date().toISOString() });
-          await evaluateVisitObjectives(movedCharacter, body.destinationId, requestId);
+          await publishQuestEvent(base44, movedCharacter, 'character.location.entered', 'character', movedCharacter.id, requestId, { from: movedCharacter.current_location_id, to: body.destinationId, location_id: body.destinationId });
         }
         await base44.asServiceRole.entities.AuditEvent.create({ game_id: character.game_id, actor_user_id: user.id, character_id: character.id, command, request_id: requestId, result: 'accepted', details: { from: character.current_location_id, to: body.destinationId, travel_time: connection.travel_time }, occurred_at: new Date().toISOString() });
       }
