@@ -44,6 +44,12 @@
         "type": "string"
       }
     },
+    "cooldowns": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
     "status": {
       "type": "string",
       "enum": [
