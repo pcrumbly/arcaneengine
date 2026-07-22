@@ -1,11 +1,12 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, PanelsTopLeft, PackageSearch, ScrollText, LogOut } from 'lucide-react';
+import { LayoutDashboard, PanelsTopLeft, PackageSearch, ScrollText, Swords, LogOut } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const links = [
   { to: '/', label: 'Runtime', icon: LayoutDashboard },
   { to: '/quests', label: 'Quests', icon: ScrollText },
   { to: '/inventory', label: 'Inventory', icon: PackageSearch },
+  { to: '/combat', label: 'Combat', icon: Swords },
   { to: '/studio', label: 'Game Studio', icon: PanelsTopLeft }
 ];
 
@@ -21,6 +22,6 @@ export default function AppShell() {
       </aside>
       <main className="min-w-0 flex-1 pb-16 md:pb-0"><Outlet/></main>
     </div>
-    <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-white/10 bg-[#0a1728] md:hidden">{links.map(({to,label,icon:Icon}) => <NavLink key={to} to={to} end={to === '/'} className={({isActive}) => `flex flex-col items-center gap-1 py-2 text-[10px] ${isActive ? 'text-cyan-300' : 'text-slate-500'}`}><Icon size={17}/>{label}</NavLink>)}</nav>
+    <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-white/10 bg-[#0a1728] md:hidden">{links.map(({to,label,icon:Icon}) => <NavLink key={to} to={to} end={to === '/'} className={({isActive}) => `flex flex-col items-center gap-1 py-2 text-[10px] ${isActive ? 'text-cyan-300' : 'text-slate-500'}`}><Icon size={17}/>{label}</NavLink>)}</nav>
   </div>;
 }

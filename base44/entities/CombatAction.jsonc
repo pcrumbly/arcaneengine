@@ -1,0 +1,55 @@
+{
+  "name": "CombatAction",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "combat_instance_id": {
+      "type": "string"
+    },
+    "round": {
+      "type": "number"
+    },
+    "actor_participant_id": {
+      "type": "string"
+    },
+    "ability_id": {
+      "type": "string"
+    },
+    "target_participant_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "client_request_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "submitted",
+        "resolved",
+        "rejected"
+      ]
+    },
+    "resolution": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "game_id",
+    "combat_instance_id",
+    "round",
+    "actor_participant_id",
+    "ability_id",
+    "client_request_id",
+    "status"
+  ]
+}

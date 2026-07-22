@@ -1,0 +1,64 @@
+{
+  "name": "CombatInstance",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "encounter_definition_id": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "CREATED",
+        "AWAITING_PARTICIPANTS",
+        "ROUND_START",
+        "AWAITING_ACTIONS",
+        "RESOLVING_ACTIONS",
+        "ROUND_END",
+        "VICTORY",
+        "DEFEAT",
+        "ESCAPED",
+        "ABORTED",
+        "COMPLETED"
+      ]
+    },
+    "round": {
+      "type": "number",
+      "default": 1
+    },
+    "active_participant_id": {
+      "type": "string"
+    },
+    "seed": {
+      "type": "number"
+    },
+    "rng_cursor": {
+      "type": "number",
+      "default": 0
+    },
+    "rewards_granted": {
+      "type": "boolean",
+      "default": false
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "character_id",
+    "encounter_definition_id",
+    "state",
+    "seed"
+  ]
+}

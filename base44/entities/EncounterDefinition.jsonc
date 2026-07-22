@@ -1,0 +1,67 @@
+{
+  "name": "EncounterDefinition",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "location_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "turn_model": {
+      "type": "string",
+      "enum": [
+        "individual_initiative",
+        "side_based",
+        "simultaneous"
+      ],
+      "default": "individual_initiative"
+    },
+    "participant_templates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "victory_conditions": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "rewards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "key",
+    "name",
+    "participant_templates"
+  ]
+}

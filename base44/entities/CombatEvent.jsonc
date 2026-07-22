@@ -1,0 +1,43 @@
+{
+  "name": "CombatEvent",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "combat_instance_id": {
+      "type": "string"
+    },
+    "sequence": {
+      "type": "number"
+    },
+    "event_type": {
+      "type": "string"
+    },
+    "actor_participant_id": {
+      "type": "string"
+    },
+    "target_participant_id": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "rng_cursor": {
+      "type": "number"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "game_id",
+    "combat_instance_id",
+    "sequence",
+    "event_type",
+    "payload",
+    "occurred_at"
+  ]
+}

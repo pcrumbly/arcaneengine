@@ -9,6 +9,7 @@ import Home from '@/pages/Home';
 import Studio from '@/pages/Studio';
 import Inventory from '@/pages/Inventory';
 import Quests from '@/pages/Quests';
+import Combat from '@/pages/Combat';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -53,6 +54,7 @@ const AuthenticatedApp = () => {
           <Route path="/" element={<Home />} />
           <Route path="/quests" element={<Quests />} />
           <Route path="/inventory" element={<Inventory />} />
+          <Route path="/combat" element={<Combat />} />
           <Route path="/studio" element={<Studio />} />
         </Route>
       </Route>

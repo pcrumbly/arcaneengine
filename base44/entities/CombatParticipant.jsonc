@@ -1,0 +1,69 @@
+{
+  "name": "CombatParticipant",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "combat_instance_id": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "team": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "maximum_resources": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "attributes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "ability_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "incapacitated",
+        "escaped"
+      ]
+    },
+    "initiative": {
+      "type": "number"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "combat_instance_id",
+    "team",
+    "name",
+    "resources",
+    "status",
+    "initiative"
+  ]
+}

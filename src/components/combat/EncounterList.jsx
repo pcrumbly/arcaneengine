@@ -1,0 +1,5 @@
+import { LoaderCircle, Play } from 'lucide-react';
+
+export default function EncounterList({ encounters, busy, onStart }) {
+  return <div className="grid gap-3 sm:grid-cols-2">{encounters.map((encounter) => <article key={encounter.id} className="rounded-lg border border-white/10 bg-[#0a1728] p-5"><p className="text-xs uppercase tracking-wider text-cyan-400">{encounter.turn_model.replaceAll('_',' ')}</p><h3 className="mt-2 font-semibold">{encounter.name}</h3><p className="mt-2 text-sm leading-6 text-slate-400">{encounter.description}</p><button disabled={busy} onClick={() => onStart(encounter.id)} className="mt-4 flex items-center gap-2 rounded-md bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950">{busy ? <LoaderCircle size={15} className="animate-spin"/> : <Play size={15}/>} Start encounter</button></article>)}</div>;
+}
