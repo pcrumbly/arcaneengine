@@ -1,0 +1,54 @@
+{
+  "name": "DialogueSession",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "npc_instance_id": {
+      "type": "string"
+    },
+    "dialogue_graph_id": {
+      "type": "string"
+    },
+    "current_node_key": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "COMPLETED",
+        "ABANDONED"
+      ],
+      "default": "ACTIVE"
+    },
+    "variables": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "character_id",
+    "npc_instance_id",
+    "dialogue_graph_id",
+    "current_node_key",
+    "state"
+  ]
+}

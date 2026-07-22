@@ -4,6 +4,7 @@ import { handleSettingsCommand } from '../../shared/settings.ts';
 import { handleContentCommand } from '../../shared/content.ts';
 import { enforceCommandRate, handleOperationsCommand } from '../../shared/operations.ts';
 import { evaluateCondition, resolveCharacterEffects } from '../../shared/rules.ts';
+import { handleDialogueCommand, loadVisibleNpcs } from '../../shared/dialogue.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -16,6 +17,7 @@ Deno.serve(async (req) => {
     const rateLimitResponse = await enforceCommandRate(base44, user, command);
     if (rateLimitResponse) return rateLimitResponse;
     if (['GET_NOTIFICATIONS','MARK_NOTIFICATION_READ','GET_OPERATIONS'].includes(command)) return await handleOperationsCommand(base44, user, body);
+    if (['START_DIALOGUE','SELECT_DIALOGUE_OPTION'].includes(command)) return await handleDialogueCommand(base44, user, body, requestId);
     if (['GET_COMBAT','START_ENCOUNTER','SELECT_COMBAT_ACTION','COMPLETE_COMBAT'].includes(command)) return await handleCombatCommand(base44, user, body, requestId);
     if (['GET_SETTINGS','SAVE_SETTINGS','SAVE_KEY_BINDING','RESET_KEY_BINDINGS'].includes(command)) return await handleSettingsCommand(base44, user, body);
     if (['CREATE_RELEASE','VALIDATE_RELEASE','PUBLISH_RELEASE','PREVIEW_MIGRATION','MIGRATE_CHARACTER'].includes(command)) return await handleContentCommand(base44, user, body);
@@ -173,13 +175,13 @@ Deno.serve(async (req) => {
     const characters = await base44.entities.Character.list('-updated_date', 20);
     const games = await base44.asServiceRole.entities.Game.filter({ status: 'published' }, 'title', 20);
     const selected = characters.find((item) => item.id === body.characterId) || characters[0] || null;
-    if (!selected) return Response.json({ games, characters, character: null, location: null, exits: [], activity: [] });
+    if (!selected) return Response.json({ games, characters, character: null, location: null, exits: [], npcs: [], activity: [] });
     const location = await base44.asServiceRole.entities.LocationDefinition.get(selected.current_location_id);
     const links = await base44.asServiceRole.entities.Connection.filter({ from_location_id: selected.current_location_id, content_version: selected.content_version, enabled: true }, 'label', 30);
     const destinations = await Promise.all(links.map((link) => base44.asServiceRole.entities.LocationDefinition.get(link.to_location_id)));
     const exits = links.map((link, index) => ({ ...link, destination: destinations[index] }));
-    const activity = await base44.asServiceRole.entities.AuditEvent.filter({ actor_user_id: user.id, character_id: selected.id, result: 'accepted' }, '-occurred_at', 8);
-    return Response.json({ games, characters, character: selected, location, exits, activity });
+    const [npcs, activity] = await Promise.all([loadVisibleNpcs(base44, selected), base44.asServiceRole.entities.AuditEvent.filter({ actor_user_id: user.id, character_id: selected.id, result: 'accepted' }, '-occurred_at', 8)]);
+    return Response.json({ games, characters, character: selected, location, exits, npcs, activity });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

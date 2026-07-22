@@ -1,0 +1,41 @@
+{
+  "name": "NPCInstance",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "definition_id": {
+      "type": "string"
+    },
+    "availability": {
+      "type": "string",
+      "enum": [
+        "available",
+        "hidden",
+        "departed"
+      ],
+      "default": "available"
+    },
+    "personal_state": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "inventory_container_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "definition_id",
+    "availability"
+  ]
+}
