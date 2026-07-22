@@ -31,14 +31,17 @@ Deno.serve(async (req) => {
     if (['GET_CAPABILITIES','TRAIN_SKILL','SAVE_LOADOUT','ACTIVATE_LOADOUT','DELETE_LOADOUT'].includes(command)) return await handleCapabilityCommand(base44, user, body, requestId);
     const loadInventory = async (characterId) => {
       const character = await base44.entities.Character.get(characterId);
-      const containers = await base44.asServiceRole.entities.Container.filter({ character_id: character.id }, 'name', 30);
-      const items = await base44.asServiceRole.entities.ItemInstance.filter({ character_id: character.id }, '-acquired_at', 200);
+      const [containers, items, inventoryEvents] = await Promise.all([
+        base44.asServiceRole.entities.Container.filter({ character_id: character.id }, 'name', 30),
+        base44.asServiceRole.entities.ItemInstance.filter({ character_id: character.id }, '-acquired_at', 200),
+        base44.asServiceRole.entities.AuditEvent.filter({ actor_user_id: user.id, character_id: character.id, result: 'accepted' }, '-occurred_at', 200)
+      ]);
       const definitionIds = [...new Set(items.map((item) => item.definition_id))];
       const definitions = await Promise.all(definitionIds.map((id) => base44.asServiceRole.entities.ItemDefinition.get(id)));
       const abilityIds = [...new Set(definitions.flatMap((definition) => definition.granted_ability_ids || []))];
       const abilities = await Promise.all(abilityIds.map((id) => base44.asServiceRole.entities.AbilityDefinition.get(id)));
       const requirementResults = await Promise.all(definitions.map((definition) => evaluateCondition(base44, { character }, definition.requirements)));
-      const rows = items.map((item) => { const definitionIndex = definitions.findIndex((current) => current.id === item.definition_id), definition = definitions[definitionIndex]; return { ...item, definition, requirements_met: requirementResults[definitionIndex], granted_abilities: (definition.granted_ability_ids || []).map((id) => abilities.find((ability) => ability.id === id)).filter(Boolean), container: containers.find((container) => container.id === item.container_id) || null }; });
+      const rows = items.map((item) => { const definitionIndex = definitions.findIndex((current) => current.id === item.definition_id), definition = definitions[definitionIndex]; return { ...item, definition, requirements_met: requirementResults[definitionIndex], granted_abilities: (definition.granted_ability_ids || []).map((id) => abilities.find((ability) => ability.id === id)).filter(Boolean), container: containers.find((container) => container.id === item.container_id) || null, history: inventoryEvents.filter((event) => event.details?.item_id === item.id || event.details?.item_ids?.includes(item.id)).slice(0, 12) }; });
       const carried = rows.filter((item) => item.container?.container_type !== 'loot');
       const loot = rows.filter((item) => item.container?.container_type === 'loot');
       const weight = carried.reduce((sum, item) => sum + (item.definition.weight || 0) * item.quantity, 0);

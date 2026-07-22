@@ -4,6 +4,7 @@ import InventoryStackActions from '@/components/inventory/InventoryStackActions'
 import ItemComparison from '@/components/inventory/ItemComparison';
 import ItemCapabilities from '@/components/inventory/ItemCapabilities';
 import ItemRequirements from '@/components/inventory/ItemRequirements';
+import ItemHistory from '@/components/inventory/ItemHistory';
 
 export default function ItemDetailsDialog({ item, items, containers, busy, onClose, onAction }) {
   if (!item) return null;
@@ -15,6 +16,7 @@ export default function ItemDetailsDialog({ item, items, containers, busy, onClo
     {!!definition.modifiers?.length && <div><p className="mb-2 text-xs uppercase tracking-wider text-slate-500">Modifiers</p>{definition.modifiers.map((modifier, index) => <p key={index} className="text-sm text-emerald-300">{modifier.attributeId}: {modifier.amount > 0 ? '+' : ''}{modifier.amount}</p>)}</div>}
     <ItemCapabilities item={item}/>
     <InventoryStackActions item={item} items={items} containers={containers} busy={busy} onAction={onAction}/>
+    <ItemHistory events={item.history}/>
     <div className="flex flex-wrap justify-end gap-2">{item.equipped_slot && <Action busy={busy} onClick={() => onAction('UNEQUIP_ITEM')}>Unequip</Action>}{!item.equipped_slot && definition.equipment_slots?.map((slot) => <Action key={slot} busy={busy} blocked={!requirementsMet} onClick={() => onAction('EQUIP_ITEM', {slot})}>Equip: {slot}</Action>)}{definition.actions?.includes('use') && <Action primary busy={busy} blocked={!requirementsMet} onClick={() => onAction('USE_ITEM')}>Use item</Action>}</div>
   </DialogContent></Dialog>;
 }
