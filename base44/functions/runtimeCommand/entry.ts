@@ -35,9 +35,11 @@ Deno.serve(async (req) => {
       const items = await base44.asServiceRole.entities.ItemInstance.filter({ character_id: character.id }, '-acquired_at', 200);
       const definitions = await Promise.all(items.map((item) => base44.asServiceRole.entities.ItemDefinition.get(item.definition_id)));
       const rows = items.map((item, index) => ({ ...item, definition: definitions[index], container: containers.find((container) => container.id === item.container_id) || null }));
-      const weight = rows.reduce((sum, item) => sum + (item.definition.weight || 0) * item.quantity, 0);
-      const capacity = containers.reduce((sum, container) => sum + (container.capacity || 0), 0);
-      return { character, containers, items: rows, summary: { weight, capacity, equipped: rows.filter((item) => item.equipped_slot).length } };
+      const carried = rows.filter((item) => item.container?.container_type !== 'loot');
+      const loot = rows.filter((item) => item.container?.container_type === 'loot');
+      const weight = carried.reduce((sum, item) => sum + (item.definition.weight || 0) * item.quantity, 0);
+      const capacity = containers.filter((container) => container.container_type !== 'loot').reduce((sum, container) => sum + (container.capacity || 0), 0);
+      return { character, containers, items: rows, summary: { weight, capacity, equipped: carried.filter((item) => item.equipped_slot).length, loot: loot.reduce((sum, item) => sum + item.quantity, 0) } };
     };
     const loadQuests = async (characterId) => {
       const character = await base44.entities.Character.get(characterId);
