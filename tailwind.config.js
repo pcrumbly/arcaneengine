@@ -10,6 +10,12 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+  			runtime: {
+  				DEFAULT: 'rgb(var(--runtime-background) / <alpha-value>)',
+  				surface: 'rgb(var(--runtime-surface) / <alpha-value>)',
+  				accent: 'rgb(var(--runtime-accent) / <alpha-value>)',
+  				text: 'rgb(var(--runtime-text) / <alpha-value>)'
+  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

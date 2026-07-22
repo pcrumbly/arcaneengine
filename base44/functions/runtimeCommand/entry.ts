@@ -90,10 +90,14 @@ Deno.serve(async (req) => {
       if (!release) return Response.json({ error: 'This game has no published content.' }, { status: 409 });
       const starts = await base44.asServiceRole.entities.LocationDefinition.filter({ game_id: game.id, content_version: release.version, tags: { '$in': ['start'] } }, '-created_date', 1);
       if (!starts[0]) return Response.json({ error: 'This game has no starting location.' }, { status: 409 });
-      const character = await base44.entities.Character.create({ game_id: game.id, content_version: release.version, name: String(body.name || '').trim(), current_location_id: starts[0].id, attributes: {}, resources: { vitality: 100 }, currency: {}, tags: [], version: 1 });
-      const container = await base44.asServiceRole.entities.Container.create({ game_id: game.id, character_id: character.id, name: 'Carried items', container_type: 'character', capacity: 30, version: 1 });
+      const definitions = await base44.asServiceRole.entities.AttributeDefinition.filter({ game_id: game.id, content_version: release.version }, 'name', 200);
+      const definedAttributes = Object.fromEntries(definitions.filter((item) => item.category !== 'resource').map((item) => [item.key, item.default_value]));
+      const definedResources = Object.fromEntries(definitions.filter((item) => item.category === 'resource').map((item) => [item.key, item.default_value]));
+      const defaults = game.character_defaults || {}, rules = game.rules || {};
+      const character = await base44.entities.Character.create({ game_id: game.id, content_version: release.version, name: String(body.name || '').trim(), current_location_id: starts[0].id, attributes: { ...definedAttributes, ...(defaults.attributes || {}) }, resources: { ...definedResources, ...(defaults.resources || {}) }, currency: defaults.currency || {}, tags: defaults.tags || [], version: 1 });
+      const container = await base44.asServiceRole.entities.Container.create({ game_id: game.id, character_id: character.id, name: 'Carried items', container_type: 'character', capacity: Number(rules.inventory_capacity || 0), version: 1 });
       const starters = await base44.asServiceRole.entities.ItemDefinition.filter({ game_id: game.id, content_version: release.version, tags: { '$in': ['starter'] } }, 'name', 20);
-      if (starters.length) await base44.asServiceRole.entities.ItemInstance.bulkCreate(starters.map((definition) => ({ game_id: game.id, content_version: release.version, definition_id: definition.id, container_id: container.id, character_id: character.id, quantity: definition.stack_limit > 1 ? 3 : 1, quality: 'standard', bound_state: 'unbound', custom_properties: {}, applied_modifications: [], acquired_at: new Date().toISOString(), version: 1 })));
+      if (starters.length) await base44.asServiceRole.entities.ItemInstance.bulkCreate(starters.map((definition) => ({ game_id: game.id, content_version: release.version, definition_id: definition.id, container_id: container.id, character_id: character.id, quantity: definition.stack_limit > 1 ? Math.min(definition.stack_limit, Number(rules.starter_stack_quantity || 1)) : 1, quality: 'standard', bound_state: 'unbound', custom_properties: {}, applied_modifications: [], acquired_at: new Date().toISOString(), version: 1 })));
     }
 
     if (command === 'GET_INVENTORY') return Response.json(await loadInventory(body.characterId));
@@ -180,13 +184,14 @@ Deno.serve(async (req) => {
     const characters = await base44.entities.Character.list('-updated_date', 20);
     const games = await base44.asServiceRole.entities.Game.filter({ status: 'published' }, 'title', 20);
     const selected = characters.find((item) => item.id === body.characterId) || characters[0] || null;
-    if (!selected) return Response.json({ games, characters, character: null, location: null, exits: [], npcs: [], activity: [] });
+    if (!selected) return Response.json({ games, game: games[0] || null, characters, character: null, location: null, exits: [], npcs: [], activity: [] });
+    const game = games.find((item) => item.id === selected.game_id) || null;
     const location = await base44.asServiceRole.entities.LocationDefinition.get(selected.current_location_id);
     const links = await base44.asServiceRole.entities.Connection.filter({ from_location_id: selected.current_location_id, content_version: selected.content_version, enabled: true }, 'label', 30);
     const destinations = await Promise.all(links.map((link) => base44.asServiceRole.entities.LocationDefinition.get(link.to_location_id)));
     const exits = links.map((link, index) => ({ ...link, destination: destinations[index] }));
     const [npcs, activity] = await Promise.all([loadVisibleNpcs(base44, selected), base44.asServiceRole.entities.AuditEvent.filter({ actor_user_id: user.id, character_id: selected.id, result: 'accepted' }, '-occurred_at', 8)]);
-    return Response.json({ games, characters, character: selected, location, exits, npcs, activity });
+    return Response.json({ games, game, characters, character: selected, location, exits, npcs, activity });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

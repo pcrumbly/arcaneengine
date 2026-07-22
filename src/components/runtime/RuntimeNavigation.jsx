@@ -1,0 +1,8 @@
+import { LayoutDashboard, PanelsTopLeft, PackageSearch, ScrollText, Settings, Swords, Users } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+const icons={'/':LayoutDashboard,'/quests':ScrollText,'/inventory':PackageSearch,'/party':Users,'/combat':Swords,'/studio':PanelsTopLeft,'/settings':Settings};
+const itemClass=({isActive})=>`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${isActive?'bg-runtime-accent/10 text-runtime-accent':'text-slate-400 hover:bg-white/5 hover:text-runtime-text'}`;
+export default function RuntimeNavigation({items}){return <>
+  <aside className="hidden md:block w-56 shrink-0 border-r border-white/10 min-h-[calc(100vh-4rem)] p-3"><nav className="space-y-1">{items.map(item=>{const Icon=icons[item.route]||LayoutDashboard;return <NavLink key={item.route} to={item.route} end={item.route==='/'} className={itemClass}><Icon size={17}/>{item.label}</NavLink>})}</nav></aside>
+  <nav className="fixed inset-x-0 bottom-0 z-40 flex overflow-x-auto border-t border-white/10 bg-runtime-surface md:hidden">{items.map(item=>{const Icon=icons[item.route]||LayoutDashboard;return <NavLink key={item.route} to={item.route} end={item.route==='/'} className={({isActive})=>`min-w-16 flex-1 flex flex-col items-center gap-1 py-2 text-[10px] ${isActive?'text-runtime-accent':'text-slate-500'}`}><Icon size={17}/>{item.label}</NavLink>})}</nav>
+</>}

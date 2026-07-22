@@ -29,6 +29,10 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    --runtime-background: 7 17 31;
+    --runtime-surface: 10 23 40;
+    --runtime-accent: 34 211 238;
+    --runtime-text: 241 245 249;
     --font-heading: ui-sans-serif, system-ui, sans-serif;
     --font-body: ui-sans-serif, system-ui, sans-serif;
     --font-display: ui-sans-serif, system-ui, sans-serif;
@@ -105,3 +109,10 @@
   .high-contrast { filter: contrast(1.18); }
   .larger-text { font-size: 112.5%; }
 }
+
+.runtime-themed .text-cyan-400, .runtime-themed .text-cyan-300 { color: rgb(var(--runtime-accent)); }
+.runtime-themed .bg-cyan-400 { background-color: rgb(var(--runtime-accent)); }
+.runtime-themed .bg-cyan-400\/10 { background-color: rgb(var(--runtime-accent) / 0.1); }
+.runtime-themed .bg-cyan-400\/15 { background-color: rgb(var(--runtime-accent) / 0.15); }
+.runtime-themed .bg-\[\#07111f\] { background-color: rgb(var(--runtime-background)); }
+.runtime-themed .bg-\[\#0a1728\] { background-color: rgb(var(--runtime-surface)); }

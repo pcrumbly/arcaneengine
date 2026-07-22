@@ -11,6 +11,7 @@ export default function useRuntime() {
     try {
       const response = await base44.functions.invoke('runtimeCommand', payload);
       setState(response.data);
+      window.dispatchEvent(new CustomEvent('runtime-state-updated',{detail:response.data}));
       return response.data;
     } catch (caught) {
       setError(caught.response?.data?.error || caught.message);

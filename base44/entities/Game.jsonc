@@ -34,6 +34,12 @@
         },
         "surface": {
           "type": "string"
+        },
+        "background": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
         }
       }
     },
@@ -41,6 +47,85 @@
       "type": "array",
       "items": {
         "type": "string"
+      }
+    },
+    "navigation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "route": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "module": {
+            "type": "string"
+          },
+          "order": {
+            "type": "number"
+          },
+          "visible": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "route",
+          "label"
+        ]
+      }
+    },
+    "header_indicators": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "character_defaults": {
+      "type": "object",
+      "properties": {
+        "attributes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "currency": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "properties": {
+        "primary_resource_key": {
+          "type": "string"
+        },
+        "defense_attribute_key": {
+          "type": "string"
+        },
+        "inventory_capacity": {
+          "type": "number"
+        },
+        "starter_stack_quantity": {
+          "type": "number"
+        }
       }
     }
   },

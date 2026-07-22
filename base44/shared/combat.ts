@@ -6,6 +6,7 @@ const randomAt = (seed:number, cursor:number) => { let x = (seed + Math.imul(cur
 
 async function loadState(base44:any, character:any) {
   character = await base44.entities.Character.get(character.id);
+  const game = await base44.asServiceRole.entities.Game.get(character.game_id);
   const partyContext = await getPartyContext(base44, character);
   const individualCombats = await base44.asServiceRole.entities.CombatInstance.filter({ character_id: character.id }, '-updated_date', 20);
   const partyCombats = partyContext.party ? await base44.asServiceRole.entities.CombatInstance.filter({ party_id: partyContext.party.id }, '-updated_date', 20) : [];
@@ -13,15 +14,15 @@ async function loadState(base44:any, character:any) {
   const combat = combats.find((item:any) => item.state !== 'COMPLETED' && item.state !== 'ABORTED') || null;
   const definitions = await base44.asServiceRole.entities.EncounterDefinition.filter({ game_id: character.game_id, content_version: character.content_version }, 'name', 50);
   const encounters = definitions.filter((encounter:any) => !encounter.location_ids?.length || encounter.location_ids.includes(character.current_location_id));
-  if (!combat) return { character, combat: null, participants: [], events: [], abilities: [], encounters };
+  if (!combat) return { game, character, combat: null, participants: [], events: [], abilities: [], encounters };
   const participants = await base44.asServiceRole.entities.CombatParticipant.filter({ combat_instance_id: combat.id }, '-initiative', 30);
   const events = await base44.asServiceRole.entities.CombatEvent.filter({ combat_instance_id: combat.id }, '-sequence', 100);
   const abilityIds = [...new Set(participants.flatMap((participant:any) => participant.ability_ids || []))];
   const abilities = await Promise.all(abilityIds.map((id:any) => base44.asServiceRole.entities.AbilityDefinition.get(id)));
-  return { character, combat, participants, events, abilities, encounters };
+  return { game, character, combat, participants, events, abilities, encounters };
 }
 
-async function resolveAction(base44:any, combat:any, actor:any, target:any, ability:any, requestId:string) {
+async function resolveAction(base44:any, combat:any, actor:any, target:any, ability:any, requestId:string, rules:any) {
   let cursor = combat.rng_cursor || 0;
   const actorResources = { ...(actor.resources || {}) };
   for (const [resource, amount] of Object.entries(ability.costs || {})) actorResources[resource] = (actorResources[resource] || 0) - Number(amount);
@@ -31,13 +32,14 @@ async function resolveAction(base44:any, combat:any, actor:any, target:any, abil
   for (const effect of ability.effects || []) {
     cursor += 1;
     const roll = randomAt(combat.seed, cursor);
-    const resolved = resolveCombatEffect(effect, { actor, target, resources:targetResources, roll });
+    const resolved = resolveCombatEffect(effect, { actor, target, resources:targetResources, roll, rules });
     targetResources = resolved.resources;
     resolution.push(resolved.record);
     if (resolved.record.type === 'applyStatus') await base44.asServiceRole.entities.ActiveEffect.create({ game_id:combat.game_id, content_version:combat.content_version, target_type:'combat_participant', target_id:target.id, combat_instance_id:combat.id, status_key:resolved.record.statusKey, source_id:ability.id, stacks:resolved.record.stacks, remaining_turns:resolved.record.remainingTurns, payload:{}, version:1 });
     if (resolved.record.type === 'removeStatus') await base44.asServiceRole.entities.ActiveEffect.deleteMany({ target_type:'combat_participant', target_id:target.id, status_key:resolved.record.statusKey });
   }
-  const status = (targetResources.vitality || 0) <= 0 ? 'incapacitated' : target.status;
+  const primaryResource = rules?.primary_resource_key;
+  const status = primaryResource && Number(targetResources[primaryResource] || 0) <= 0 ? 'incapacitated' : target.status;
   await base44.asServiceRole.entities.CombatParticipant.update(target.id, { resources: targetResources, status, version: target.version + 1 });
   const action = await base44.asServiceRole.entities.CombatAction.create({ game_id: combat.game_id, combat_instance_id: combat.id, round: combat.round, actor_participant_id: actor.id, ability_id: ability.id, target_participant_ids: [target.id], client_request_id: requestId, status: 'resolved', resolution: { effects: resolution }, resolved_at: new Date().toISOString() });
   const priorEvents = await base44.asServiceRole.entities.CombatEvent.filter({ combat_instance_id: combat.id }, '-sequence', 1);
@@ -65,6 +67,8 @@ async function conclude(base44:any, combat:any, character:any) {
 
 export async function handleCombatCommand(base44:any, user:any, body:any, requestId:string) {
   const character = await base44.entities.Character.get(body.characterId);
+  const game = await base44.asServiceRole.entities.Game.get(character.game_id);
+  const rules = game.rules || {};
   if (body.command === 'GET_COMBAT') return Response.json(await loadState(base44, character));
   if (body.command === 'START_ENCOUNTER') {
     const partyContext = await getPartyContext(base44, character);
@@ -101,7 +105,7 @@ export async function handleCombatCommand(base44:any, user:any, body:any, reques
     if (target.combat_instance_id !== combat.id || target.team === actor.team || target.status !== 'active') return Response.json({ error: 'That target is not valid.' }, { status: 422 });
     if (Object.entries(ability.costs || {}).some(([resource, amount]) => (actor.resources?.[resource] || 0) < Number(amount))) return Response.json({ error: 'This participant lacks the required resources.' }, { status: 422 });
     if (!await evaluateCondition(base44, { character:actorCharacter, actor, target }, ability.requirements)) return Response.json({ error: 'This participant does not meet the ability requirements.' }, { status: 422 });
-    combat = await resolveAction(base44, combat, actor, target, ability, requestId);
+    combat = await resolveAction(base44, combat, actor, target, ability, requestId, rules);
     combat = await conclude(base44, combat, character);
     if (combat.state === 'AWAITING_ACTIONS') {
       let participants = await base44.asServiceRole.entities.CombatParticipant.filter({ combat_instance_id: combat.id }, '-initiative', 30);
@@ -110,7 +114,7 @@ export async function handleCombatCommand(base44:any, user:any, body:any, reques
       const attackedPlayer=players.find((item:any)=>item.id===actor.id)||players[0];
       if (enemy && attackedPlayer) {
         const enemyAbility = await base44.asServiceRole.entities.AbilityDefinition.get(enemy.ability_ids[0]);
-        combat = await resolveAction(base44, combat, enemy, attackedPlayer, enemyAbility, `${requestId}:response`);
+        combat = await resolveAction(base44, combat, enemy, attackedPlayer, enemyAbility, `${requestId}:response`, rules);
         combat = await conclude(base44, combat, character);
       }
       if (combat.state === 'AWAITING_ACTIONS') {participants=await base44.asServiceRole.entities.CombatParticipant.filter({combat_instance_id:combat.id},'-initiative',30);const activePlayers=participants.filter((item:any)=>item.team==='player'&&item.status==='active'),priorIndex=Math.max(0,activePlayers.findIndex((item:any)=>item.id===actor.id)),nextIndex=(priorIndex+1)%activePlayers.length,nextPlayer=activePlayers[nextIndex];combat=await base44.asServiceRole.entities.CombatInstance.update(combat.id,{round:combat.round+(nextIndex===0?1:0),active_participant_id:nextPlayer.id,version:combat.version+1});}
