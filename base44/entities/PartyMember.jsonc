@@ -1,0 +1,58 @@
+{
+  "name": "PartyMember",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "party_id": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "leader",
+        "member",
+        "ally"
+      ]
+    },
+    "formation_position": {
+      "type": "string"
+    },
+    "readiness": {
+      "type": "string",
+      "enum": [
+        "ready",
+        "not_ready"
+      ],
+      "default": "ready"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "left"
+      ],
+      "default": "active"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "party_id",
+    "character_id",
+    "role",
+    "readiness",
+    "status"
+  ]
+}

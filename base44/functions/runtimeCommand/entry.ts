@@ -5,6 +5,7 @@ import { handleContentCommand } from '../../shared/content.ts';
 import { enforceCommandRate, handleOperationsCommand } from '../../shared/operations.ts';
 import { evaluateCondition, resolveCharacterEffects } from '../../shared/rules.ts';
 import { handleDialogueCommand, loadVisibleNpcs } from '../../shared/dialogue.ts';
+import { handlePartyCommand, isMovementLocked, movePartyWithLeader } from '../../shared/party.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -18,6 +19,7 @@ Deno.serve(async (req) => {
     if (rateLimitResponse) return rateLimitResponse;
     if (['GET_NOTIFICATIONS','MARK_NOTIFICATION_READ','GET_OPERATIONS'].includes(command)) return await handleOperationsCommand(base44, user, body);
     if (['START_DIALOGUE','SELECT_DIALOGUE_OPTION'].includes(command)) return await handleDialogueCommand(base44, user, body, requestId);
+    if (['GET_PARTY','CREATE_PARTY','ADD_PARTY_MEMBER','REMOVE_PARTY_MEMBER','DISBAND_PARTY'].includes(command)) return await handlePartyCommand(base44, user, body, requestId);
     if (['GET_COMBAT','START_ENCOUNTER','SELECT_COMBAT_ACTION','COMPLETE_COMBAT'].includes(command)) return await handleCombatCommand(base44, user, body, requestId);
     if (['GET_SETTINGS','SAVE_SETTINGS','SAVE_KEY_BINDING','RESET_KEY_BINDINGS'].includes(command)) return await handleSettingsCommand(base44, user, body);
     if (['CREATE_RELEASE','VALIDATE_RELEASE','PUBLISH_RELEASE','PREVIEW_MIGRATION','MIGRATE_CHARACTER'].includes(command)) return await handleContentCommand(base44, user, body);
@@ -159,15 +161,18 @@ Deno.serve(async (req) => {
       const duplicates = await base44.asServiceRole.entities.AuditEvent.filter({ actor_user_id: user.id, request_id: requestId, result: 'accepted' }, '-occurred_at', 1);
       if (!duplicates.length) {
         const character = await base44.entities.Character.get(body.characterId);
+        if (await isMovementLocked(base44, character)) return Response.json({ error: 'Characters cannot move while their combat is unresolved.' }, { status: 409 });
         if (character.version !== body.characterVersion) return Response.json({ error: 'Character state changed. Refresh and try again.' }, { status: 409 });
         const connections = await base44.asServiceRole.entities.Connection.filter({ from_location_id: character.current_location_id, to_location_id: body.destinationId, content_version: character.content_version, enabled: true });
         const connection = connections[0];
         if (!connection) return Response.json({ error: 'That route is not currently available.' }, { status: 422 });
         const missingTags = (connection.required_tags || []).filter((tag) => !(character.tags || []).includes(tag));
         if (missingTags.length || !await evaluateCondition(base44, { character }, connection.conditions)) return Response.json({ error: 'This character does not meet the route requirements.' }, { status: 422 });
-        await base44.entities.Character.update(character.id, { current_location_id: body.destinationId, version: character.version + 1 });
-        await base44.asServiceRole.entities.DomainEvent.create({ game_id: character.game_id, character_id: character.id, event_type: 'character.location.entered', aggregate_type: 'character', aggregate_id: character.id, request_id: requestId, content_version: character.content_version, payload: { from: character.current_location_id, to: body.destinationId }, occurred_at: new Date().toISOString() });
-        await evaluateVisitObjectives(character, body.destinationId, requestId);
+        const movedCharacters = await movePartyWithLeader(base44, character, body.destinationId);
+        for (const movedCharacter of movedCharacters) {
+          await base44.asServiceRole.entities.DomainEvent.create({ game_id: movedCharacter.game_id, character_id: movedCharacter.id, event_type: 'character.location.entered', aggregate_type: 'character', aggregate_id: movedCharacter.id, request_id: requestId, content_version: movedCharacter.content_version, payload: { from: movedCharacter.current_location_id, to: body.destinationId }, occurred_at: new Date().toISOString() });
+          await evaluateVisitObjectives(movedCharacter, body.destinationId, requestId);
+        }
         await base44.asServiceRole.entities.AuditEvent.create({ game_id: character.game_id, actor_user_id: user.id, character_id: character.id, command, request_id: requestId, result: 'accepted', details: { from: character.current_location_id, to: body.destinationId, travel_time: connection.travel_time }, occurred_at: new Date().toISOString() });
       }
     }

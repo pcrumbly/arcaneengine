@@ -1,0 +1,46 @@
+{
+  "name": "Party",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "owner_user_id": {
+      "type": "string"
+    },
+    "leader_character_id": {
+      "type": "string"
+    },
+    "current_location_id": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "active",
+        "in_combat",
+        "disbanded"
+      ],
+      "default": "active"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "name",
+    "owner_user_id",
+    "leader_character_id",
+    "current_location_id",
+    "state"
+  ]
+}

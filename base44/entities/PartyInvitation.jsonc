@@ -1,0 +1,47 @@
+{
+  "name": "PartyInvitation",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "party_id": {
+      "type": "string"
+    },
+    "invited_user_id": {
+      "type": "string"
+    },
+    "invited_character_id": {
+      "type": "string"
+    },
+    "invited_by_user_id": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "declined",
+        "expired",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "party_id",
+    "invited_user_id",
+    "invited_by_user_id",
+    "state"
+  ]
+}
