@@ -157,8 +157,8 @@ Deno.serve(async (req) => {
         const character = await base44.entities.Character.get(body.characterId);
         if (await isMovementLocked(base44, character)) return Response.json({ error: 'Characters cannot move while their combat is unresolved.' }, { status: 409 });
         if (character.version !== body.characterVersion) return Response.json({ error: 'Character state changed. Refresh and try again.' }, { status: 409 });
-        const connections = await base44.asServiceRole.entities.Connection.filter({ from_location_id: character.current_location_id, to_location_id: body.destinationId, content_version: character.content_version, enabled: true });
-        const connection = connections[0];
+        const [forwardRoutes,reverseRoutes] = await Promise.all([base44.asServiceRole.entities.Connection.filter({ from_location_id: character.current_location_id, to_location_id: body.destinationId, content_version: character.content_version, enabled: true }),base44.asServiceRole.entities.Connection.filter({ from_location_id: body.destinationId, to_location_id: character.current_location_id, content_version: character.content_version, enabled: true, one_way: false })]);
+        const connection = forwardRoutes[0] || reverseRoutes[0];
         if (!connection) return Response.json({ error: 'That route is not currently available.' }, { status: 422 });
         const missingTags = (connection.required_tags || []).filter((tag) => !(character.tags || []).includes(tag));
         if (missingTags.length || !await evaluateCondition(base44, { character }, connection.conditions)) return Response.json({ error: 'This character does not meet the route requirements.' }, { status: 422 });
@@ -176,7 +176,9 @@ Deno.serve(async (req) => {
     if (!selected) return Response.json({ games, game: games[0] || null, characters, character: null, location: null, exits: [], npcs: [], activity: [] });
     const game = games.find((item) => item.id === selected.game_id) || null;
     const location = await base44.asServiceRole.entities.LocationDefinition.get(selected.current_location_id);
-    const links = await base44.asServiceRole.entities.Connection.filter({ from_location_id: selected.current_location_id, content_version: selected.content_version, enabled: true }, 'label', 30);
+    const [forwardLinks,reverseLinks] = await Promise.all([base44.asServiceRole.entities.Connection.filter({ from_location_id: selected.current_location_id, content_version: selected.content_version, enabled: true }, 'label', 30),base44.asServiceRole.entities.Connection.filter({ to_location_id: selected.current_location_id, content_version: selected.content_version, enabled: true, one_way: false }, 'label', 30)]);
+    const reverseOnly = reverseLinks.filter((link) => !forwardLinks.some((forward) => forward.to_location_id === link.from_location_id));
+    const links = [...forwardLinks,...reverseOnly.map((link) => ({...link,to_location_id:link.from_location_id,from_location_id:selected.current_location_id,reverse:true}))];
     const destinations = await Promise.all(links.map((link) => base44.asServiceRole.entities.LocationDefinition.get(link.to_location_id)));
     const exits = links.map((link, index) => ({ ...link, destination: destinations[index] }));
     const [npcs, activity] = await Promise.all([loadVisibleNpcs(base44, selected), base44.asServiceRole.entities.AuditEvent.filter({ actor_user_id: user.id, character_id: selected.id, result: 'accepted' }, '-occurred_at', 8)]);
