@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Download, Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import InventorySummary from '@/components/inventory/InventorySummary';
 import InventoryTable from '@/components/inventory/InventoryTable';
@@ -14,9 +14,10 @@ export default function Inventory() {
   if (!hasCharacter) return <div className="p-6"><h2 className="text-2xl font-semibold">No active character</h2><p className="mt-2 text-sm text-slate-400">Create a character from the Runtime page before opening inventory.</p></div>;
   if (!data) return <div className="p-6 text-sm text-slate-400">Loading inventory…</div>;
   const action = (command, values = {}) => invoke({ command, characterId: data.character.id, itemId: selected.id, itemVersion: selected.version, ...values, requestId: crypto.randomUUID() });
+  const collectLoot = () => invoke({ command: 'COLLECT_LOOT', characterId: data.character.id, requestId: crypto.randomUUID() });
   return <div className="p-4 sm:p-6"><p className="text-xs uppercase tracking-[.22em] text-cyan-400">Character / Assets</p><h2 className="mt-1 text-2xl font-semibold">Inventory & equipment</h2><div className="mt-5"><InventorySummary summary={data.summary}/></div>
     {error && <div role="alert" className="mt-4 rounded-md border border-red-400/20 bg-red-400/10 p-3 text-sm text-red-200">{error}</div>}
-    <div className="mt-5 flex flex-col gap-3 sm:flex-row"><label className="relative flex-1"><Search className="absolute left-3 top-2.5 text-slate-500" size={16}/><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search items" className="w-full rounded-md border border-white/10 bg-[#0a1728] py-2 pl-9 pr-3 text-sm"/></label><select value={category} onChange={(e) => setCategory(e.target.value)} className="rounded-md border border-white/10 bg-[#0a1728] px-3 py-2 text-sm"><option value="all">All categories</option>{categories.map((value) => <option key={value}>{value}</option>)}</select><select value={storage} onChange={(e) => setStorage(e.target.value)} className="rounded-md border border-white/10 bg-[#0a1728] px-3 py-2 text-sm"><option value="all">All storage</option><option value="carried">Carried items</option><option value="loot">Encounter loot</option></select></div>
+    <div className="mt-5 flex flex-col gap-3 sm:flex-row"><label className="relative flex-1"><Search className="absolute left-3 top-2.5 text-slate-500" size={16}/><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search items" className="w-full rounded-md border border-white/10 bg-[#0a1728] py-2 pl-9 pr-3 text-sm"/></label><select value={category} onChange={(e) => setCategory(e.target.value)} className="rounded-md border border-white/10 bg-[#0a1728] px-3 py-2 text-sm"><option value="all">All categories</option>{categories.map((value) => <option key={value}>{value}</option>)}</select><select value={storage} onChange={(e) => setStorage(e.target.value)} className="rounded-md border border-white/10 bg-[#0a1728] px-3 py-2 text-sm"><option value="all">All storage</option><option value="carried">Carried items</option><option value="loot">Encounter loot</option></select>{data.summary.loot > 0 && <button disabled={busy} onClick={collectLoot} className="inline-flex items-center justify-center gap-2 rounded-md bg-cyan-400 px-3 py-2 text-sm font-medium text-slate-950 disabled:opacity-50"><Download size={15}/>Collect all loot</button>}</div>
     <div className="mt-3"><InventoryTable items={filtered} onInspect={setSelected}/></div><ItemDetailsDialog item={selected} items={data.items} containers={data.containers} busy={busy} onClose={() => setSelected(null)} onAction={action}/>
   </div>;
 }
