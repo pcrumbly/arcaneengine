@@ -1,0 +1,7 @@
+export default function InventoryFilters({categories,category,onCategoryChange,containers,containerId,onContainerChange}){
+  return <div className="mt-5 flex flex-col gap-3 border-b border-white/10 pb-3 lg:flex-row lg:items-end lg:justify-between"><div role="tablist" aria-label="Item categories" className="flex gap-1 overflow-x-auto"><Tab active={category==='all'} onClick={()=>onCategoryChange('all')}>All</Tab>{categories.map(value=><Tab key={value} active={category===value} onClick={()=>onCategoryChange(value)}>{value}</Tab>)}</div><label className="flex shrink-0 items-center gap-2 text-xs text-slate-400"><span>Container</span><select value={containerId} onChange={event=>onContainerChange(event.target.value)} className="rounded-md border border-white/10 bg-runtime-surface px-3 py-2 text-sm text-slate-100"><option value="all">All containers</option>{containers.map(container=><option key={container.id} value={container.id}>{container.name}</option>)}</select></label></div>;
+}
+
+function Tab({active,onClick,children}){
+  return <button role="tab" aria-selected={active} onClick={onClick} className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm capitalize ${active?'border-cyan-400 text-cyan-200':'border-transparent text-slate-400 hover:text-slate-200'}`}>{children}</button>;
+}
