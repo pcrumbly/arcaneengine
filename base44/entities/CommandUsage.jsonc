@@ -1,0 +1,33 @@
+{
+  "name": "CommandUsage",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "command": {
+      "type": "string"
+    },
+    "window_key": {
+      "type": "string"
+    },
+    "count": {
+      "type": "number",
+      "default": 1
+    },
+    "limit": {
+      "type": "number"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "user_id",
+    "command",
+    "window_key",
+    "count",
+    "limit"
+  ]
+}

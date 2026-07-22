@@ -1,0 +1,40 @@
+{
+  "name": "OperationalEvent",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "info",
+        "warning",
+        "critical"
+      ]
+    },
+    "command": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "category",
+    "severity",
+    "message",
+    "occurred_at"
+  ]
+}

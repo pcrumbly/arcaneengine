@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { handleCombatCommand } from '../../shared/combat.ts';
 import { handleSettingsCommand } from '../../shared/settings.ts';
 import { handleContentCommand } from '../../shared/content.ts';
+import { enforceCommandRate, handleOperationsCommand } from '../../shared/operations.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -11,6 +12,9 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const command = body.command;
     const requestId = body.requestId || crypto.randomUUID();
+    const rateLimitResponse = await enforceCommandRate(base44, user, command);
+    if (rateLimitResponse) return rateLimitResponse;
+    if (['GET_NOTIFICATIONS','MARK_NOTIFICATION_READ','GET_OPERATIONS'].includes(command)) return await handleOperationsCommand(base44, user, body);
     if (['GET_COMBAT','START_ENCOUNTER','SELECT_COMBAT_ACTION','COMPLETE_COMBAT'].includes(command)) return await handleCombatCommand(base44, user, body, requestId);
     if (['GET_SETTINGS','SAVE_SETTINGS','SAVE_KEY_BINDING','RESET_KEY_BINDINGS'].includes(command)) return await handleSettingsCommand(base44, user, body);
     if (['CREATE_RELEASE','VALIDATE_RELEASE','PUBLISH_RELEASE','PREVIEW_MIGRATION','MIGRATE_CHARACTER'].includes(command)) return await handleContentCommand(base44, user, body);

@@ -1,0 +1,32 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "recipient_user_id": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "link": {
+      "type": "string"
+    },
+    "read": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "recipient_user_id",
+    "category",
+    "title",
+    "message",
+    "read"
+  ]
+}
