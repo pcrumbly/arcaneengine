@@ -1,0 +1,54 @@
+{
+  "name": "ActiveEffect",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "character",
+        "combat_participant"
+      ]
+    },
+    "target_id": {
+      "type": "string"
+    },
+    "combat_instance_id": {
+      "type": "string"
+    },
+    "status_key": {
+      "type": "string"
+    },
+    "source_id": {
+      "type": "string"
+    },
+    "stacks": {
+      "type": "number",
+      "default": 1
+    },
+    "remaining_turns": {
+      "type": "number"
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "target_type",
+    "target_id",
+    "status_key",
+    "stacks"
+  ]
+}

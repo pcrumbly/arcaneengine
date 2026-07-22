@@ -3,6 +3,7 @@ import { handleCombatCommand } from '../../shared/combat.ts';
 import { handleSettingsCommand } from '../../shared/settings.ts';
 import { handleContentCommand } from '../../shared/content.ts';
 import { enforceCommandRate, handleOperationsCommand } from '../../shared/operations.ts';
+import { evaluateCondition, resolveCharacterEffects } from '../../shared/rules.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -37,7 +38,9 @@ Deno.serve(async (req) => {
       const definitions = [...currentDefinitions, ...legacyDefinitions];
       const rows = await Promise.all(instances.map(async (instance) => ({ ...instance, definition: definitions.find((definition) => definition.id === instance.definition_id), objectives: await base44.asServiceRole.entities.ObjectiveInstance.filter({ quest_instance_id: instance.id }, 'objective_key', 100) })));
       const instancedIds = new Set(instances.filter((instance) => instance.state !== 'ABANDONED').map((instance) => instance.definition_id));
-      return { character, available: currentDefinitions.filter((definition) => !instancedIds.has(definition.id)), quests: rows };
+      const availability = await Promise.all(currentDefinitions.map((definition) => evaluateCondition(base44, { character }, definition.availability_conditions)));
+      const availableDefinitions = currentDefinitions.filter((definition, index) => availability[index]);
+      return { character, available: availableDefinitions.filter((definition) => !instancedIds.has(definition.id)), quests: rows };
     };
     const evaluateVisitObjectives = async (character, locationId, eventRequestId) => {
       const quests = await base44.asServiceRole.entities.QuestInstance.filter({ character_id: character.id, state: 'ACTIVE' }, '-accepted_at', 100);
@@ -98,6 +101,7 @@ Deno.serve(async (req) => {
       if (!duplicate.length) {
         const definition = await base44.asServiceRole.entities.QuestDefinition.get(body.questDefinitionId);
         if (definition.game_id !== character.game_id || definition.content_version !== character.content_version) return Response.json({ error: 'Quest content is not valid for this character.' }, { status: 422 });
+        if (!await evaluateCondition(base44, { character }, definition.availability_conditions)) return Response.json({ error: 'This character does not meet the quest requirements.' }, { status: 422 });
         const existing = await base44.asServiceRole.entities.QuestInstance.filter({ character_id: character.id, definition_id: definition.id }, '-created_date', 20);
         if (existing.some((instance) => instance.state !== 'ABANDONED') && definition.repeatability === 'never') return Response.json({ error: 'This quest cannot be accepted again.' }, { status: 409 });
         const instance = await base44.asServiceRole.entities.QuestInstance.create({ game_id: character.game_id, content_version: character.content_version, definition_id: definition.id, character_id: character.id, state: 'ACTIVE', accepted_at: new Date().toISOString(), branch_state: {}, reward_state: 'pending', version: 1 });
@@ -128,6 +132,7 @@ Deno.serve(async (req) => {
         if (item.character_id !== character.id) return Response.json({ error: 'Item ownership could not be verified.' }, { status: 403 });
         if (item.version !== body.itemVersion) return Response.json({ error: 'Item state changed. Refresh and try again.' }, { status: 409 });
         const definition = await base44.asServiceRole.entities.ItemDefinition.get(item.definition_id);
+        if (!await evaluateCondition(base44, { character }, definition.requirements)) return Response.json({ error: 'This character does not meet the item requirements.' }, { status: 422 });
         if (command === 'EQUIP_ITEM') {
           const slot = body.slot;
           if (!(definition.equipment_slots || []).includes(slot)) return Response.json({ error: 'That item cannot use the selected slot.' }, { status: 422 });
@@ -138,9 +143,8 @@ Deno.serve(async (req) => {
         if (command === 'UNEQUIP_ITEM') await base44.asServiceRole.entities.ItemInstance.update(item.id, { equipped_slot: null, version: item.version + 1 });
         if (command === 'USE_ITEM') {
           if (!(definition.actions || []).includes('use')) return Response.json({ error: 'This item is not usable.' }, { status: 422 });
-          const resources = { ...(character.resources || {}) };
-          for (const effect of definition.use_effects || []) if (effect.type === 'resourceChange') resources[effect.resourceId] = Math.max(0, (resources[effect.resourceId] || 0) + Number(effect.amount || 0));
-          await base44.entities.Character.update(character.id, { resources, version: character.version + 1 });
+          const resolved = await resolveCharacterEffects(base44, character, definition.use_effects || []);
+          await base44.entities.Character.update(character.id, { ...resolved.patch, version: character.version + 1 });
           if (item.quantity <= 1) await base44.asServiceRole.entities.ItemInstance.delete(item.id);
           else await base44.asServiceRole.entities.ItemInstance.update(item.id, { quantity: item.quantity - 1, version: item.version + 1 });
         }
@@ -158,7 +162,7 @@ Deno.serve(async (req) => {
         const connection = connections[0];
         if (!connection) return Response.json({ error: 'That route is not currently available.' }, { status: 422 });
         const missingTags = (connection.required_tags || []).filter((tag) => !(character.tags || []).includes(tag));
-        if (missingTags.length) return Response.json({ error: 'This character does not meet the route requirements.' }, { status: 422 });
+        if (missingTags.length || !await evaluateCondition(base44, { character }, connection.conditions)) return Response.json({ error: 'This character does not meet the route requirements.' }, { status: 422 });
         await base44.entities.Character.update(character.id, { current_location_id: body.destinationId, version: character.version + 1 });
         await base44.asServiceRole.entities.DomainEvent.create({ game_id: character.game_id, character_id: character.id, event_type: 'character.location.entered', aggregate_type: 'character', aggregate_id: character.id, request_id: requestId, content_version: character.content_version, payload: { from: character.current_location_id, to: body.destinationId }, occurred_at: new Date().toISOString() });
         await evaluateVisitObjectives(character, body.destinationId, requestId);

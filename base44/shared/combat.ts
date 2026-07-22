@@ -1,3 +1,4 @@
+import { evaluateCondition, resolveCombatEffect } from './rules.ts';
 const LIVE_STATES = ['CREATED','AWAITING_PARTICIPANTS','ROUND_START','AWAITING_ACTIONS','RESOLVING_ACTIONS','ROUND_END'];
 const hashSeed = (value:string) => [...value].reduce((hash, char) => Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0, 2166136261);
 const randomAt = (seed:number, cursor:number) => { let x = (seed + Math.imul(cursor + 1, 0x6D2B79F5)) >>> 0; x = Math.imul(x ^ x >>> 15, x | 1); x ^= x + Math.imul(x ^ x >>> 7, x | 61); return ((x ^ x >>> 14) >>> 0) / 4294967296; };
@@ -21,25 +22,16 @@ async function resolveAction(base44:any, combat:any, actor:any, target:any, abil
   const actorResources = { ...(actor.resources || {}) };
   for (const [resource, amount] of Object.entries(ability.costs || {})) actorResources[resource] = (actorResources[resource] || 0) - Number(amount);
   await base44.asServiceRole.entities.CombatParticipant.update(actor.id, { resources: actorResources, version: actor.version + 1 });
-  const targetResources = { ...(target.resources || {}) };
+  let targetResources = { ...(target.resources || {}) };
   const resolution:any[] = [];
   for (const effect of ability.effects || []) {
     cursor += 1;
     const roll = randomAt(combat.seed, cursor);
-    if (effect.type === 'damage') {
-      const resource = effect.resourceId || 'vitality';
-      const defense = Number(target.attributes?.[effect.defenseAttributeId || 'defense'] || 0);
-      const amount = Math.max(0, Math.round(Number(effect.amount || 0) * (0.9 + roll * 0.2) - defense));
-      targetResources[resource] = Math.max(0, (targetResources[resource] || 0) - amount);
-      resolution.push({ type: 'damage', resource, amount, roll });
-    }
-    if (effect.type === 'healing') {
-      const resource = effect.resourceId || 'vitality';
-      const maximum = target.maximum_resources?.[resource] || 100;
-      const amount = Math.max(0, Math.round(Number(effect.amount || 0) * (0.9 + roll * 0.2)));
-      targetResources[resource] = Math.min(maximum, (targetResources[resource] || 0) + amount);
-      resolution.push({ type: 'healing', resource, amount, roll });
-    }
+    const resolved = resolveCombatEffect(effect, { actor, target, resources:targetResources, roll });
+    targetResources = resolved.resources;
+    resolution.push(resolved.record);
+    if (resolved.record.type === 'applyStatus') await base44.asServiceRole.entities.ActiveEffect.create({ game_id:combat.game_id, content_version:combat.content_version, target_type:'combat_participant', target_id:target.id, combat_instance_id:combat.id, status_key:resolved.record.statusKey, source_id:ability.id, stacks:resolved.record.stacks, remaining_turns:resolved.record.remainingTurns, payload:{}, version:1 });
+    if (resolved.record.type === 'removeStatus') await base44.asServiceRole.entities.ActiveEffect.deleteMany({ target_type:'combat_participant', target_id:target.id, status_key:resolved.record.statusKey });
   }
   const status = (targetResources.vitality || 0) <= 0 ? 'incapacitated' : target.status;
   await base44.asServiceRole.entities.CombatParticipant.update(target.id, { resources: targetResources, status, version: target.version + 1 });
@@ -101,6 +93,7 @@ export async function handleCombatCommand(base44:any, user:any, body:any, reques
     if (actor.character_id !== character.id || !(actor.ability_ids || []).includes(ability.id)) return Response.json({ error: 'That action is not available to this participant.' }, { status: 422 });
     if (target.combat_instance_id !== combat.id || target.team === actor.team || target.status !== 'active') return Response.json({ error: 'That target is not valid.' }, { status: 422 });
     if (Object.entries(ability.costs || {}).some(([resource, amount]) => (actor.resources?.[resource] || 0) < Number(amount))) return Response.json({ error: 'This participant lacks the required resources.' }, { status: 422 });
+    if (!await evaluateCondition(base44, { character, actor, target }, ability.requirements)) return Response.json({ error: 'This participant does not meet the ability requirements.' }, { status: 422 });
     combat = await resolveAction(base44, combat, actor, target, ability, requestId);
     combat = await conclude(base44, combat, character);
     if (combat.state === 'AWAITING_ACTIONS') {

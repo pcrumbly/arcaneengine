@@ -1,5 +1,6 @@
 import { createNotification } from './operations.ts';
-const entities = ['LocationDefinition','Connection','QuestDefinition','ItemDefinition','AbilityDefinition','EncounterDefinition'];
+import { validateConditionDefinition, validateEffectDefinitions, validateFormulaExpression } from './rules.ts';
+const entities = ['LocationDefinition','Connection','QuestDefinition','ItemDefinition','AbilityDefinition','EncounterDefinition','AttributeDefinition','FormulaDefinition','EffectDefinition','StatusDefinition'];
 async function releaseData(base44:any, release:any) { const rows:any = {}; await Promise.all(entities.map(async name => { rows[name] = await base44.asServiceRole.entities[name].filter({game_id:release.game_id,content_version:release.version},'created_date',500); })); return rows; }
 async function validate(base44:any, release:any) {
   const data=await releaseData(base44,release), errors:any[]=[], warnings:any[]=[];
@@ -9,6 +10,11 @@ async function validate(base44:any, release:any) {
   for(const quest of data.QuestDefinition) for(const objective of quest.objective_graph?.objectives||[]) if(objective.type==='visitLocation'&&objective.targetId&&!locations.has(objective.targetId)) errors.push({type:'broken_quest_target',id:quest.id,message:`Quest ${quest.name} references a missing location.`});
   for(const item of data.ItemDefinition) for(const id of item.granted_ability_ids||[]) if(!abilities.has(id)) errors.push({type:'broken_item_ability',id:item.id,message:`Item ${item.name} grants a missing ability.`});
   for(const encounter of data.EncounterDefinition) { for(const id of encounter.location_ids||[]) if(!locations.has(id)) errors.push({type:'broken_encounter_location',id:encounter.id,message:`Encounter ${encounter.name} references a missing location.`}); for(const participant of encounter.participant_templates||[]) for(const id of participant.ability_ids||[]) if(!abilities.has(id)) errors.push({type:'broken_encounter_ability',id:encounter.id,message:`Encounter ${encounter.name} references a missing ability.`}); }
+  for(const link of data.Connection){const issue=validateConditionDefinition(link.conditions);if(issue)errors.push({type:'invalid_connection_condition',id:link.id,message:issue});}
+  for(const quest of data.QuestDefinition){const issue=validateConditionDefinition(quest.availability_conditions);if(issue)errors.push({type:'invalid_quest_condition',id:quest.id,message:issue});}
+  for(const ability of data.AbilityDefinition){const conditionIssue=validateConditionDefinition(ability.requirements),effectIssue=validateEffectDefinitions(ability.effects);if(conditionIssue)errors.push({type:'invalid_ability_condition',id:ability.id,message:conditionIssue});if(effectIssue)errors.push({type:'invalid_ability_effect',id:ability.id,message:effectIssue});}
+  for(const formula of data.FormulaDefinition){const issue=validateFormulaExpression(formula.expression);if(issue)errors.push({type:'invalid_formula',id:formula.id,message:issue});}
+  for(const definition of [...data.EffectDefinition,...data.StatusDefinition]){const issue=validateEffectDefinitions(definition.effects);if(issue)errors.push({type:'invalid_effect_definition',id:definition.id,message:issue});}
   if(!data.EncounterDefinition.length) warnings.push({type:'no_encounters',message:'This release contains no encounters.'});
   const previous=(await base44.asServiceRole.entities.ContentRelease.filter({game_id:release.game_id,status:'published'},'-published_at',1))[0]; let diff:any=null;
   if(previous&&previous.id!==release.id){const old=await releaseData(base44,previous);diff=Object.fromEntries(entities.map(name=>[name,{previous:old[name].length,current:data[name].length,delta:data[name].length-old[name].length}]));}

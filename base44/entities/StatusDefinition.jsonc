@@ -1,5 +1,5 @@
 {
-  "name": "AbilityDefinition",
+  "name": "StatusDefinition",
   "type": "object",
   "properties": {
     "game_id": {
@@ -17,25 +17,25 @@
     "description": {
       "type": "string"
     },
-    "tags": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+    "stacking": {
+      "type": "string",
+      "enum": [
+        "replace",
+        "stack",
+        "refresh"
+      ]
     },
-    "costs": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "number"
-      }
+    "maximum_stacks": {
+      "type": "number",
+      "default": 1
     },
-    "targeting": {
-      "type": "object",
-      "additionalProperties": true
-    },
-    "requirements": {
-      "type": "object",
-      "additionalProperties": true
+    "duration_type": {
+      "type": "string",
+      "enum": [
+        "turns",
+        "time",
+        "permanent"
+      ]
     },
     "effects": {
       "type": "array",
@@ -44,15 +44,19 @@
         "additionalProperties": true
       }
     },
-    "cooldown": {
-      "type": "number",
-      "default": 0
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "required": [
     "game_id",
     "content_version",
     "key",
-    "name"
+    "name",
+    "stacking",
+    "duration_type"
   ]
 }

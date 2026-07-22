@@ -35,6 +35,10 @@
         "type": "string"
       }
     },
+    "conditions": {
+      "type": "object",
+      "additionalProperties": true
+    },
     "enabled": {
       "type": "boolean",
       "default": true
