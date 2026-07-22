@@ -1,0 +1,4 @@
+import { useState } from 'react';
+import ContentForm from '@/components/studio/ContentForm';
+import { gameFields } from '@/lib/studioContentConfig';
+export default function GameConfiguration({games,busy,onSave}){const [gameId,setGameId]=useState(games[0]?.id||''),game=games.find(x=>x.id===gameId);if(!game)return <p className="text-sm text-slate-500">Create a game to configure its manifest.</p>;return <div><select value={gameId} onChange={e=>setGameId(e.target.value)} className="mb-4 rounded border border-white/10 bg-runtime-surface px-3 py-2 text-sm">{games.map(x=><option key={x.id} value={x.id}>{x.title}</option>)}</select><ContentForm key={`${game.id}-${game.updated_date}`} item={game} fields={gameFields} busy={busy} saveLabel="Save game configuration" onSave={values=>onSave(game.id,values)}/></div>}
