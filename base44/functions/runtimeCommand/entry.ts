@@ -11,6 +11,7 @@ import { handleCapabilityCommand } from '../../shared/capabilities.ts';
 import { claimQuestReward, createObjectiveRows, publishQuestEvent, refreshQuestProgress, selectQuestBranch } from '../../shared/quests.ts';
 import { handleInventoryCommand } from '../../shared/inventory.ts';
 import { handleSimulationCommand } from '../../shared/simulation.ts';
+import { handlePlatformCommand } from '../../shared/platform.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -23,6 +24,7 @@ Deno.serve(async (req) => {
     const rateLimitResponse = await enforceCommandRate(base44, user, command);
     if (rateLimitResponse) return rateLimitResponse;
     if (['GET_NOTIFICATIONS','MARK_NOTIFICATION_READ','GET_OPERATIONS'].includes(command)) return await handleOperationsCommand(base44, user, body);
+    if (['GET_PRESENTATION','GET_ACCOUNT','SAVE_ACCOUNT_LOCALE','GET_WORLD','GET_JOURNAL'].includes(command)) return await handlePlatformCommand(base44, user, body);
     if (['GET_NPC_INTERACTION','EXECUTE_NPC_ACTION','START_DIALOGUE','SELECT_DIALOGUE_OPTION'].includes(command)) return await handleDialogueCommand(base44, user, body, requestId);
     if (['GET_PARTY','CREATE_PARTY','ADD_PARTY_MEMBER','REMOVE_PARTY_MEMBER','DISBAND_PARTY'].includes(command)) return await handlePartyCommand(base44, user, body, requestId);
     if (['GET_COMBAT','START_ENCOUNTER','SELECT_COMBAT_ACTION','COMPLETE_COMBAT'].includes(command)) return await handleCombatCommand(base44, user, body, requestId);
@@ -67,16 +69,17 @@ Deno.serve(async (req) => {
     };
     if (command === 'STUDIO_OVERVIEW') {
       if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
-      const [games, releases, locations, connections, quests, encounters, characters] = await Promise.all([
+      const [games, releases, packs, locations, connections, quests, encounters, characters] = await Promise.all([
         base44.asServiceRole.entities.Game.list(),
         base44.asServiceRole.entities.ContentRelease.list('-created_date', 50),
+        base44.asServiceRole.entities.ContentPack.list('-created_date', 100),
         base44.asServiceRole.entities.LocationDefinition.list(),
         base44.asServiceRole.entities.Connection.list(),
         base44.asServiceRole.entities.QuestDefinition.list(),
         base44.asServiceRole.entities.EncounterDefinition.list(),
         base44.asServiceRole.entities.Character.list('-updated_date', 100)
       ]);
-      return Response.json({ games, releases, characters, counts: { games: games.length, releases: releases.length, locations: locations.length, connections: connections.length, quests: quests.length, encounters: encounters.length } });
+      return Response.json({ games, releases, packs, characters, counts: { games: games.length, releases: releases.length, packs: packs.length, locations: locations.length, connections: connections.length, quests: quests.length, encounters: encounters.length } });
     }
 
     if (command === 'CREATE_CHARACTER') {

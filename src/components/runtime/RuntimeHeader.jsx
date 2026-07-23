@@ -10,7 +10,7 @@ export default function RuntimeHeader({ state, game }) {
   return <header className="min-h-16 border-b border-white/10 bg-runtime-surface px-4 py-2 sm:px-6 flex items-center justify-between gap-4">
     <div><p className="text-[10px] uppercase tracking-[.28em] text-runtime-accent">RPG Runtime</p><h1 className="font-semibold tracking-tight">{game?.title || 'RPG Runtime'}</h1></div>
     <div className="hidden lg:flex items-center gap-4 text-xs text-slate-400">
-      {character && indicators.has('character') && <span>{term(game,'character','Character')}: <b className="text-runtime-text">{character.name}</b></span>}
+      {character && indicators.has('character') && <span>{term(game,'character','Character',state?.translations)}: <b className="text-runtime-text">{character.name}</b></span>}
       {state?.location && indicators.has('location') && <span className="flex gap-1"><MapPin size={14}/>{state.location.name}</span>}
       {resource && indicators.has('resource') && <span className="flex gap-1 capitalize"><Activity size={14}/>{resource[0]} {resource[1]}</span>}
       {currency !== null && indicators.has('currency') && <span className="flex gap-1"><Coins size={14}/>{currency}</span>}

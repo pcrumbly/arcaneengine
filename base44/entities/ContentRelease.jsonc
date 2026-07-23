@@ -8,6 +8,12 @@
     "version": {
       "type": "string"
     },
+    "content_pack_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "status": {
       "type": "string",
       "enum": [

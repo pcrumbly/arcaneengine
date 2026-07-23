@@ -1,6 +1,6 @@
-import { LayoutDashboard, PanelsTopLeft, PackageSearch, ScrollText, Settings, Swords, UserRound, Users } from 'lucide-react';
+import { BookOpen, Brain, CircleUserRound, Globe2, LayoutDashboard, Mail, PanelsTopLeft, PackageSearch, ScrollText, Settings, Swords, UserRound, Users } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
-const icons={'/':LayoutDashboard,'/character':UserRound,'/quests':ScrollText,'/inventory':PackageSearch,'/party':Users,'/combat':Swords,'/studio':PanelsTopLeft,'/settings':Settings};
+const icons={'/':LayoutDashboard,'/world':Globe2,'/character':UserRound,'/quests':ScrollText,'/journal':BookOpen,'/inventory':PackageSearch,'/skills':Brain,'/party':Users,'/combat':Swords,'/messages':Mail,'/studio':PanelsTopLeft,'/settings':Settings,'/account':CircleUserRound};
 const itemClass=({isActive})=>`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${isActive?'bg-runtime-accent/10 text-runtime-accent':'text-slate-400 hover:bg-white/5 hover:text-runtime-text'}`;
 export default function RuntimeNavigation({items}){return <>
   <aside className="hidden md:block w-56 shrink-0 border-r border-white/10 min-h-[calc(100vh-4rem)] p-3"><nav className="space-y-1">{items.map(item=>{const Icon=icons[item.route]||LayoutDashboard;return <NavLink key={item.route} to={item.route} end={item.route==='/'} className={itemClass}><Icon size={17}/>{item.label}</NavLink>})}</nav></aside>

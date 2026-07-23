@@ -33,6 +33,14 @@
     --runtime-surface: 10 23 40;
     --runtime-accent: 34 211 238;
     --runtime-text: 241 245 249;
+    --runtime-muted: 100 116 139;
+    --runtime-border: 255 255 255;
+    --runtime-danger: 248 113 113;
+    --runtime-heading-font: ui-sans-serif, system-ui, sans-serif;
+    --runtime-body-font: ui-sans-serif, system-ui, sans-serif;
+    --runtime-radius: 0.5rem;
+    --runtime-density: 1;
+    --runtime-media-radius: 0.5rem;
     --font-heading: ui-sans-serif, system-ui, sans-serif;
     --font-body: ui-sans-serif, system-ui, sans-serif;
     --font-display: ui-sans-serif, system-ui, sans-serif;
@@ -110,6 +118,10 @@
   .larger-text { font-size: 112.5%; }
 }
 
+.runtime-themed { font-family: var(--runtime-body-font); line-height: calc(1.5 * var(--runtime-density)); }
+.runtime-themed h1, .runtime-themed h2, .runtime-themed h3 { font-family: var(--runtime-heading-font); }
+.runtime-themed .rounded, .runtime-themed .rounded-md, .runtime-themed .rounded-lg { border-radius: var(--runtime-radius); }
+.runtime-themed img, .runtime-themed video { border-radius: var(--runtime-media-radius); }
 .runtime-themed .text-cyan-400, .runtime-themed .text-cyan-300 { color: rgb(var(--runtime-accent)); }
 .runtime-themed .bg-cyan-400 { background-color: rgb(var(--runtime-accent)); }
 .runtime-themed .bg-cyan-400\/10 { background-color: rgb(var(--runtime-accent) / 0.1); }

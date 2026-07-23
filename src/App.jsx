@@ -18,6 +18,10 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
+import World from '@/pages/World';
+import Journal from '@/pages/Journal';
+import Messages from '@/pages/Messages';
+import Account from '@/pages/Account';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
@@ -56,6 +60,10 @@ const AuthenticatedApp = () => {
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<AppShell />}>
           <Route path="/" element={<Home />} />
+          <Route path="/world" element={<World />} />
+          <Route path="/journal" element={<Journal />} />
+          <Route path="/messages" element={<Messages />} />
+          <Route path="/account" element={<Account />} />
           <Route path="/quests" element={<Quests />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/character" element={<Character />} />

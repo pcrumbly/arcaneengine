@@ -40,6 +40,55 @@
         },
         "text": {
           "type": "string"
+        },
+        "muted": {
+          "type": "string"
+        },
+        "border": {
+          "type": "string"
+        },
+        "danger": {
+          "type": "string"
+        },
+        "heading_font": {
+          "type": "string",
+          "enum": [
+            "system",
+            "serif",
+            "mono"
+          ]
+        },
+        "body_font": {
+          "type": "string",
+          "enum": [
+            "system",
+            "serif",
+            "mono"
+          ]
+        },
+        "density": {
+          "type": "string",
+          "enum": [
+            "compact",
+            "comfortable",
+            "spacious"
+          ]
+        },
+        "radius": {
+          "type": "string",
+          "enum": [
+            "sharp",
+            "rounded",
+            "pill"
+          ]
+        },
+        "media_style": {
+          "type": "string",
+          "enum": [
+            "square",
+            "rounded",
+            "cinematic"
+          ]
         }
       }
     },
@@ -58,6 +107,9 @@
             "type": "string"
           },
           "label": {
+            "type": "string"
+          },
+          "label_key": {
             "type": "string"
           },
           "module": {

@@ -1,0 +1,49 @@
+{
+  "name": "ContentPack",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "published",
+        "retired"
+      ],
+      "default": "draft"
+    },
+    "dependency_pack_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "module_keys": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "game_id",
+    "key",
+    "name",
+    "version",
+    "status"
+  ]
+}

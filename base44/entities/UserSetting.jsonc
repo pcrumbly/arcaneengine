@@ -8,6 +8,7 @@
     "scope": {
       "type": "string",
       "enum": [
+        "account",
         "player",
         "game",
         "sound",

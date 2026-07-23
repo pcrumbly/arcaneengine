@@ -1,5 +1,5 @@
 {
-  "name": "ArcaneEngine",
+  "name": "RPG Runtime",
   "site": {
     "installCommand": "npm install",
     "buildCommand": "npm run build",
