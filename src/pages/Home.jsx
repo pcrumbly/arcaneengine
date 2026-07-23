@@ -23,6 +23,6 @@ export default function Home() {
       {error && <div className="mb-4"><PageAlert message={error}/></div>}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]"><LocationPanel location={state.location} exits={state.exits} npcs={state.npcs || []} busy={busy || npc.busy} onMove={move} onNpc={(placementId) => npc.open(state.character, placementId)}/><ActivityFeed events={state.activity}/></div>
     </PageLayout>
-    <NpcInteractionDialog interaction={npc.interaction} dialogue={npc.dialogue} busy={npc.busy} error={npc.error} onAction={npc.act} onSelect={npc.select} onBack={npc.back} onClose={npc.close}/>
+    <NpcInteractionDialog interaction={npc.interaction} dialogue={npc.dialogue} result={npc.result} busy={npc.busy} error={npc.error} onAction={npc.act} onSelect={npc.select} onBack={npc.back} onClose={npc.close}/>
   </div>;
 }
