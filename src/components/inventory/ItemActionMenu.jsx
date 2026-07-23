@@ -2,6 +2,6 @@ import { Eye, MoreHorizontal, Shield, Sparkles } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function ItemActionMenu({item,busy,onInspect,onAction}){
-  const definition=item.definition,blocked=item.requirements_met===false;
+  const definition=item.definition,blocked=item.requirements_met===false||item.container?.owner_type==='party';
   return <DropdownMenu><DropdownMenuTrigger asChild><button disabled={busy} aria-label={`Actions for ${definition.name}`} className="inline-flex rounded border border-white/10 p-1.5 hover:border-cyan-400/40 disabled:opacity-40"><MoreHorizontal size={15}/></button></DropdownMenuTrigger><DropdownMenuContent align="end" className="border-white/10 bg-runtime-surface text-slate-100"><DropdownMenuItem onSelect={()=>onInspect(item)}><Eye/>Inspect</DropdownMenuItem><DropdownMenuSeparator className="bg-white/10"/>{item.equipped_slot?<DropdownMenuItem onSelect={()=>onAction(item,'UNEQUIP_ITEM')}><Shield/>Unequip</DropdownMenuItem>:(definition.equipment_slots||[]).map(slot=><DropdownMenuItem key={slot} disabled={blocked} onSelect={()=>onAction(item,'EQUIP_ITEM',{slot})}><Shield/>Equip: {slot}</DropdownMenuItem>)}{definition.actions?.includes('use')&&<DropdownMenuItem disabled={blocked} onSelect={()=>onAction(item,'USE_ITEM')}><Sparkles/>Use item</DropdownMenuItem>}</DropdownMenuContent></DropdownMenu>;
 }

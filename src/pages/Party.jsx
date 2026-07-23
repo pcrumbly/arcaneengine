@@ -1,9 +1,0 @@
-import { useEffect, useState } from 'react';
-import { invokeRuntimeCommand } from '@/lib/runtimeCommandClient';
-import PartySetup from '@/components/party/PartySetup';
-import PartyRoster from '@/components/party/PartyRoster';
-import PageLayout from '@/components/runtime/PageLayout';
-import PageAlert from '@/components/runtime/PageAlert';
-import PageState from '@/components/runtime/PageState';
-
-export default function Party(){const [data,setData]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState('');const invoke=async(payload)=>{setBusy(true);setError('');try{const {data:next}=await invokeRuntimeCommand(payload);setData(next)}catch(caught){setError(caught.response?.data?.error||caught.message)}finally{setBusy(false)}};useEffect(()=>{invokeRuntimeCommand({command:'GET_STATE'}).then(({data:state})=>state.character&&invoke({command:'GET_PARTY',characterId:state.character.id}))},[]);if(!data)return <PageState title="Loading party" description="Resolving members, invitations, location, and formation."/>;const command=(payload)=>invoke({characterId:data.character.id,requestId:crypto.randomUUID(),...payload});return <PageLayout eyebrow="Runtime / Group management" title="Party" description="Build a formation from your characters at the current location.">{error&&<div className="mt-4"><PageAlert message={error}/></div>}<div className="mt-6">{data.party?<PartyRoster {...data} busy={busy} onAdd={(memberCharacterId)=>command({command:'ADD_PARTY_MEMBER',memberCharacterId})} onRemove={(memberId)=>command({command:'REMOVE_PARTY_MEMBER',memberId})} onDisband={()=>command({command:'DISBAND_PARTY'})}/>:<PartySetup character={data.character} busy={busy} onCreate={(name)=>command({command:'CREATE_PARTY',name})}/>}</div></PageLayout>}

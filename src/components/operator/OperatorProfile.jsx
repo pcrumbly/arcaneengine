@@ -1,0 +1,7 @@
+import CharacterSummary from '@/components/character/CharacterSummary';
+import CharacterValues from '@/components/character/CharacterValues';
+import CharacterEffects from '@/components/character/CharacterEffects';
+import CharacterProgression from '@/components/character/CharacterProgression';
+import DerivedValues from '@/components/character/DerivedValues';
+import { LoaderCircle } from 'lucide-react';
+export default function OperatorProfile({profile}){if(!profile)return <div className="grid min-h-64 place-items-center rounded-lg border border-white/10 bg-runtime-surface text-sm text-slate-400"><span className="flex items-center gap-2"><LoaderCircle size={17} className="animate-spin text-runtime-accent"/>Loading operator profile</span></div>;const visible=profile.attributeDefinitions.filter(item=>item.visibility!=='hidden');return <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]"><div className="space-y-4"><CharacterSummary character={profile.character}/><CharacterValues title="Attributes" values={profile.character.attributes} definitions={visible}/><CharacterValues title="Resources" values={profile.character.resources} definitions={visible}/><DerivedValues values={profile.derivedValues}/><CharacterProgression skills={profile.skills} equipment={profile.equipment} currency={profile.character.currency}/></div><CharacterEffects effects={profile.effects}/></div>;}

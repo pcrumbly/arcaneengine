@@ -1,19 +1,19 @@
 import { useEffect,useState } from 'react';
 import { invokeRuntimeCommand } from '@/lib/runtimeCommandClient';
-import CharacterSummary from '@/components/character/CharacterSummary';
-import CharacterValues from '@/components/character/CharacterValues';
-import CharacterEffects from '@/components/character/CharacterEffects';
-import CharacterProgression from '@/components/character/CharacterProgression';
-import DerivedValues from '@/components/character/DerivedValues';
+import OperatorMemberSelector from '@/components/operator/OperatorMemberSelector';
+import OperatorTabs from '@/components/operator/OperatorTabs';
+import OperatorProfile from '@/components/operator/OperatorProfile';
+import OperatorInventory from '@/components/operator/OperatorInventory';
+import OperatorPartyPanel from '@/components/operator/OperatorPartyPanel';
 import PageLayout from '@/components/runtime/PageLayout';
+import PageAlert from '@/components/runtime/PageAlert';
 import PageState from '@/components/runtime/PageState';
-
+const validTabs=new Set(['profile','inventory','party']);
 export default function Character(){
-  const [profile,setProfile]=useState(null),[empty,setEmpty]=useState(false),[error,setError]=useState('');
-  useEffect(()=>{invokeRuntimeCommand({command:'GET_STATE'}).then(({data})=>{if(!data.character){setEmpty(true);return;}return invokeRuntimeCommand({command:'GET_CHARACTER_PROFILE',characterId:data.character.id});}).then(response=>response&&setProfile(response.data)).catch(caught=>setError(caught.response?.data?.error||caught.message));},[]);
-  if(error)return <PageState kind="error" title="Unable to load character" description={error}/>;
-  if(empty)return <PageState kind="empty" title="No active character" description="Create a character from the Runtime page first."/>;
-  if(!profile)return <PageState title="Loading character profile" description="Resolving attributes, equipment, progression, and active effects."/>;
-  const visible=profile.attributeDefinitions.filter(item=>item.visibility!=='hidden');
-  return <PageLayout eyebrow="Character / Profile" title="Character sheet" description="Inspect attributes, resources, progression, equipment, and active effects."><div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]"><div className="space-y-4"><CharacterSummary character={profile.character}/><CharacterValues title="Attributes" values={profile.character.attributes} definitions={visible}/><CharacterValues title="Resources" values={profile.character.resources} definitions={visible}/><DerivedValues values={profile.derivedValues}/><CharacterProgression skills={profile.skills} equipment={profile.equipment} currency={profile.character.currency}/></div><CharacterEffects effects={profile.effects}/></div></PageLayout>;
+ const initialTab=new URLSearchParams(window.location.search).get('tab')||'profile',[tab,setTab]=useState(validTabs.has(initialTab)?initialTab:'profile'),[partyData,setPartyData]=useState(null),[selectedId,setSelectedId]=useState(null),[profile,setProfile]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[empty,setEmpty]=useState(false);
+ useEffect(()=>{invokeRuntimeCommand({command:'GET_STATE'}).then(({data})=>{if(!data.character){setEmpty(true);return null}setSelectedId(data.character.id);return invokeRuntimeCommand({command:'GET_PARTY',characterId:data.character.id})}).then(response=>response&&setPartyData(response.data)).catch(caught=>setError(caught.response?.data?.error||caught.message))},[]);
+ useEffect(()=>{if(!selectedId||tab!=='profile')return;setProfile(null);invokeRuntimeCommand({command:'GET_CHARACTER_PROFILE',characterId:selectedId}).then(({data})=>setProfile(data)).catch(caught=>setError(caught.response?.data?.error||caught.message))},[selectedId,tab]);
+ if(error&&!partyData)return <PageState kind="error" title="Unable to load operators" description={error}/>;if(empty)return <PageState kind="empty" title="No active operator" description="Create a character from the Runtime page first."/>;if(!partyData)return <PageState title="Loading operators" description="Resolving party members, profiles, and storage."/>;
+ const members=partyData.party?partyData.members:[{character:partyData.character,role:'operator'}],selected=members.find(member=>member.character.id===selectedId)?.character||partyData.character,changeTab=next=>{setTab(next);window.history.replaceState({},'',`${window.location.pathname}?tab=${next}`)},command=async payload=>{setBusy(true);setError('');try{const {data}=await invokeRuntimeCommand({characterId:partyData.character.id,requestId:crypto.randomUUID(),...payload});setPartyData(data);const ids=(data.party?data.members:[{character:data.character}]).map(member=>member.character.id);if(!ids.includes(selectedId))setSelectedId(data.character.id)}catch(caught){setError(caught.response?.data?.error||caught.message)}finally{setBusy(false)}};
+ return <PageLayout eyebrow="Operator system" title="Operator control" description="Manage every party member, their profile, equipment, personal inventory, and shared party storage."><OperatorMemberSelector members={members} selectedId={selected.id} onSelect={setSelectedId}/><div className="mt-5"><OperatorTabs active={tab} onChange={changeTab}/></div>{error&&<div className="mt-4"><PageAlert message={error}/></div>}<div className="mt-5">{tab==='profile'&&<OperatorProfile profile={profile?.character.id===selected.id?profile:null}/>} {tab==='inventory'&&<OperatorInventory key={selected.id} character={selected}/>} {tab==='party'&&<OperatorPartyPanel data={partyData} busy={busy} onCreate={name=>command({command:'CREATE_PARTY',name})} onAdd={memberCharacterId=>command({command:'ADD_PARTY_MEMBER',memberCharacterId})} onRemove={memberId=>command({command:'REMOVE_PARTY_MEMBER',memberId})} onDisband={()=>command({command:'DISBAND_PARTY'})}/>}</div></PageLayout>;
 }

@@ -8,13 +8,11 @@ import AdminRoute from '@/components/AdminRoute';
 import AppShell from '@/components/runtime/AppShell';
 import Home from '@/pages/Home';
 import Studio from '@/pages/Studio';
-import Inventory from '@/pages/Inventory';
 import Character from '@/pages/Character';
 import Skills from '@/pages/Skills';
 import Quests from '@/pages/Quests';
 import Achievements from '@/pages/Achievements';
 import Combat from '@/pages/Combat';
-import Party from '@/pages/Party';
 import Settings from '@/pages/Settings';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
@@ -70,10 +68,10 @@ const AuthenticatedApp = () => {
           <Route path="/module/:moduleKey" element={<RuntimeModule />} />
           <Route path="/quests" element={<Quests />} />
           <Route path="/achievements" element={<Achievements />} />
-          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/inventory" element={<Navigate to="/character?tab=inventory" replace />} />
           <Route path="/character" element={<Character />} />
           <Route path="/skills" element={<Skills />} />
-          <Route path="/party" element={<Party />} />
+          <Route path="/party" element={<Navigate to="/character?tab=party" replace />} />
           <Route path="/combat" element={<Combat />} />
           <Route element={<AdminRoute />}>
             <Route path="/studio" element={<Studio />} />

@@ -2,9 +2,9 @@ import { engineModules, engineModuleRoutes } from '@/lib/engineModules';
 const registered=new Map(engineModules.map(item=>[item.route,item]));
 export function resolveNavigation(game,translations={}) {
   const baseNavigation = game?.navigation?.length ? game.navigation : engineModules;
-  const configured = baseNavigation.some(item=>item.route==='/achievements') ? baseNavigation : [...baseNavigation,registered.get('/achievements')];
+  const additions=['/character','/achievements'].filter(route=>!baseNavigation.some(item=>item.route===route)).map(route=>registered.get(route)),configured=[...baseNavigation,...additions].filter(item=>!['/inventory','/party'].includes(item.route));
   const modules = new Set(game?.enabled_modules || []);
-  return configured.filter(item => (engineModuleRoutes.has(item.route) || /^\/module\/[a-z0-9._-]+$/i.test(item.route)) && item.visible !== false && (!item.module || !modules.size || modules.has(item.module) || (item.module==='journal'&&modules.has('quests')) || ['achievements','studio','settings','messages','account'].includes(item.module))).map(item=>{const definition=registered.get(item.route),labelKey=item.label_key||definition?.labelKey;return {...definition,...item,label:translations[labelKey]||item.label||definition?.label};}).sort((a,b) => (a.order || 0) - (b.order || 0));
+  return configured.filter(item => (engineModuleRoutes.has(item.route) || /^\/module\/[a-z0-9._-]+$/i.test(item.route)) && item.visible !== false && (!item.module || !modules.size || modules.has(item.module) || (item.module==='journal'&&modules.has('quests')) || ['characters','achievements','studio','settings','messages','account'].includes(item.module))).map(item=>{const definition=registered.get(item.route),labelKey=item.route==='/character'?'nav.operator':item.label_key||definition?.labelKey;return {...definition,...item,label:translations[labelKey]||(item.route==='/character'?'Operator':item.label||definition?.label)};}).sort((a,b) => (a.order || 0) - (b.order || 0));
 }
 function rgb(hex, fallback) {
   if (!/^#[0-9a-f]{6}$/i.test(hex || '')) return fallback;
