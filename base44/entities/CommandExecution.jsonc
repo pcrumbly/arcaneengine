@@ -1,0 +1,75 @@
+{
+  "name": "CommandExecution",
+  "type": "object",
+  "properties": {
+    "actor_user_id": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "command": {
+      "type": "string"
+    },
+    "aggregate_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "processing",
+        "completed",
+        "failed"
+      ]
+    },
+    "lock_token": {
+      "type": "string"
+    },
+    "lease_expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status_code": {
+      "type": "number"
+    },
+    "response_body": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "error": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "actor_user_id",
+    "request_id",
+    "command",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

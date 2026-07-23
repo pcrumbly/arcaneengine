@@ -11,6 +11,7 @@ import { handleSimulationCommand } from '../../shared/simulation.ts';
 import { handlePlatformCommand } from '../../shared/platform.ts';
 import { getCommandContract, publicCommandContracts, validateCommandPayload, validateCommandResponse } from '../../shared/commandContracts.ts';
 import { handleRuntimeCommand } from '../../shared/runtime.ts';
+import { beginCommand, completeCommand, failCommand } from '../../shared/idempotency.ts';
 
 const domainHandlers:any={
   operations:(base44:any,user:any,body:any)=>handleOperationsCommand(base44,user,body),
@@ -27,8 +28,9 @@ const domainHandlers:any={
 };
 
 Deno.serve(async (req) => {
+  let base44:any=null,executionContext:any=null;
   try {
-    const base44 = createClientFromRequest(req);
+    base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     const body = await req.json();
@@ -38,14 +40,18 @@ Deno.serve(async (req) => {
     const contract:any = getCommandContract(command);
     const requestId = body.requestId || crypto.randomUUID();
     if (contract.domain === 'contracts') return Response.json(publicCommandContracts());
+    executionContext=await beginCommand(base44,user,body,requestId);
+    if(executionContext.replay)return executionContext.replay;
     const rateLimitResponse = await enforceCommandRate(base44, user, command);
-    if (rateLimitResponse) return rateLimitResponse;
+    if(rateLimitResponse){await completeCommand(base44,executionContext,rateLimitResponse);return rateLimitResponse;}
     const handler=domainHandlers[contract.domain];
     if(!handler)return Response.json({error:`No handler registered for ${contract.domain}.`},{status:500});
     const response=await handler(base44,user,body,requestId);
-    if(response.ok){const responseBody=await response.clone().json();const responseError=validateCommandResponse(command,responseBody);if(responseError)return Response.json({error:'Command response violated its contract.',details:responseError},{status:500});}
+    if(response.ok){const responseBody=await response.clone().json();const responseError=validateCommandResponse(command,responseBody);if(responseError){const invalid=Response.json({error:'Command response violated its contract.',details:responseError},{status:500});await completeCommand(base44,executionContext,invalid);return invalid;}}
+    await completeCommand(base44,executionContext,response);
     return response;
   } catch (error) {
+    if(base44)await failCommand(base44,executionContext,error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

@@ -51,6 +51,12 @@
         "type": "string"
       }
     },
+    "processed_transaction_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "version": {
       "type": "number",
       "default": 1

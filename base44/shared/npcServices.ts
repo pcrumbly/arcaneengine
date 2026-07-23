@@ -1,5 +1,6 @@
 import { evaluateCondition, resolveCharacterEffects } from './rules.ts';
 import { grantPurchasedItem } from './inventory.ts';
+import { applyCharacterTransaction, applySkillRankTransaction } from './economy.ts';
 
 const amounts=(values:any)=>Object.entries(values||{}).filter(([,amount])=>Number(amount)>0);
 function affordability(character:any,service:any){return amounts(service.costs).every(([key,amount])=>Number(character.currency?.[key]||0)>=Number(amount))&&amounts(service.resource_costs).every(([key,amount])=>Number(character.resources?.[key]||0)>=Number(amount));}
@@ -10,21 +11,17 @@ export async function describeNpcService(base44:any,character:any,service:any={}
   if(service.skill_definition_id){const skill=await base44.asServiceRole.entities.SkillDefinition.get(service.skill_definition_id),rows=await base44.asServiceRole.entities.CharacterSkill.filter({character_id:character.id,skill_definition_id:skill.id},'-updated_date',1),rank=Number(rows[0]?.rank||0);summary.skill={id:skill.id,name:skill.name,rank,max_rank:Number(skill.max_rank||1)};if(rank>=summary.skill.max_rank){summary.can_use=false;summary.unavailable_reason='Maximum rank reached.';}else if(!await evaluateCondition(base44,{character},skill.requirements)){summary.can_use=false;summary.unavailable_reason='Training requirements are not met.';}}
   return summary;
 }
-export async function executeNpcService(base44:any,character:any,action:any){
+export async function executeNpcService(base44:any,character:any,action:any,transactionId:string){
   const service=action.service||{},kind=service.kind||'custom';
   if(!affordability(character,service))return {error:'This character cannot afford that service.'};
   if(kind==='shop'&&!service.item_definition_id)return {error:'This shop service has no item configured.'};
   if(kind==='training'&&!service.skill_definition_id)return {error:'This training service has no skill configured.'};
   let item=null,skill=null,skillRecord=null;
   if(service.item_definition_id){item=await base44.asServiceRole.entities.ItemDefinition.get(service.item_definition_id);if(item.game_id!==character.game_id||item.content_version!==character.content_version)return {error:'That shop item is not valid for this character.'};const issue=await purchaseIssue(base44,character,item,Math.max(1,Number(service.quantity||1)));if(issue)return {error:issue};}
-  if(service.skill_definition_id){skill=await base44.asServiceRole.entities.SkillDefinition.get(service.skill_definition_id);if(skill.game_id!==character.game_id||skill.content_version!==character.content_version)return {error:'That training is not valid for this character.'};if(!await evaluateCondition(base44,{character},skill.requirements))return {error:'This character does not meet the training requirements.'};const rows=await base44.asServiceRole.entities.CharacterSkill.filter({character_id:character.id,skill_definition_id:skill.id},'-updated_date',1);skillRecord=rows[0]||null;if(Number(skillRecord?.rank||0)>=Number(skill.max_rank||1))return {error:'This skill is already at maximum rank.'};}
-  const currency={...(character.currency||{})},resources={...(character.resources||{})};
-  for(const [key,amount] of amounts(service.costs))currency[key]=Number(currency[key]||0)-Number(amount);
-  for(const [key,amount] of amounts(service.resource_costs))resources[key]=Number(resources[key]||0)-Number(amount);
-  const working={...character,currency,resources},effects=(action.effects||[]).filter((effect:any)=>effect.type!=='relationshipChange'),resolved=await resolveCharacterEffects(base44,working,effects);
-  const updated=await base44.entities.Character.update(character.id,{...resolved.patch,version:character.version+1});
-  const outcomes=[...resolved.outcomes];
-  if(item)outcomes.push(await grantPurchasedItem(base44,updated,{itemDefinitionId:item.id,quantity:service.quantity||1}));
-  if(skill){const rank=Number(skillRecord?.rank||0)+1;if(skillRecord)await base44.asServiceRole.entities.CharacterSkill.update(skillRecord.id,{rank,version:Number(skillRecord.version||1)+1});else await base44.asServiceRole.entities.CharacterSkill.create({game_id:updated.game_id,content_version:updated.content_version,character_id:updated.id,skill_definition_id:skill.id,rank,experience:0,version:1});outcomes.push({type:'training',skill_definition_id:skill.id,skill_name:skill.name,rank});}
+  if(service.skill_definition_id){skill=await base44.asServiceRole.entities.SkillDefinition.get(service.skill_definition_id);if(skill.game_id!==character.game_id||skill.content_version!==character.content_version)return {error:'That training is not valid for this character.'};if(!await evaluateCondition(base44,{character},skill.requirements))return {error:'This character does not meet the training requirements.'};const rows=await base44.asServiceRole.entities.CharacterSkill.filter({character_id:character.id,skill_definition_id:skill.id},'-updated_date',1);skillRecord=rows[0]||null;if(Number(skillRecord?.rank||0)>=Number(skill.max_rank||1)&&!skillRecord?.processed_transaction_ids?.includes(`${transactionId}:skill`))return {error:'This skill is already at maximum rank.'};}
+  const applied=await applyCharacterTransaction(base44,character.id,`${transactionId}:character`,async(fresh:any)=>{if(!affordability(fresh,service))throw new Error('This character cannot afford that service.');const currency={...(fresh.currency||{})},resources={...(fresh.resources||{})};for(const [key,amount] of amounts(service.costs))currency[key]=Number(currency[key]||0)-Number(amount);for(const [key,amount] of amounts(service.resource_costs))resources[key]=Number(resources[key]||0)-Number(amount);const resolved=await resolveCharacterEffects(base44,{...fresh,currency,resources},(action.effects||[]).filter((effect:any)=>effect.type!=='relationshipChange'));return resolved.patch;});
+  const updated=applied.character,outcomes:any[]=[];
+  if(item)outcomes.push(await grantPurchasedItem(base44,updated,{itemDefinitionId:item.id,quantity:service.quantity||1},`${transactionId}:item`));
+  if(skill){const trained=await applySkillRankTransaction(base44,updated,skill,`${transactionId}:skill`);outcomes.push({type:'training',skill_definition_id:skill.id,skill_name:skill.name,rank:trained.rank});}
   return {character:updated,outcomes};
 }

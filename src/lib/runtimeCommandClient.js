@@ -26,5 +26,6 @@ export async function invokeRuntimeCommand(payload) {
       if (type && !matchesType(value, type)) throw new Error(`${field} must be a ${type}.`);
     }
   }
-  return base44.functions.invoke('runtimeCommand', payload);
+  const request = payload?.requestId ? payload : { ...payload, requestId: crypto.randomUUID() };
+  return base44.functions.invoke('runtimeCommand', request);
 }
