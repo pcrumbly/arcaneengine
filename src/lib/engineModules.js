@@ -3,6 +3,7 @@ export const engineModules=[
   {route:'/world',label:'World',labelKey:'nav.world',module:'world',order:12},
   {route:'/character',label:'Character',labelKey:'nav.character',module:'characters',order:15},
   {route:'/quests',label:'Quests',labelKey:'nav.quests',module:'quests',order:20},
+  {route:'/achievements',label:'Achievements',labelKey:'nav.achievements',module:'achievements',order:22},
   {route:'/journal',label:'Journal',labelKey:'nav.journal',module:'journal',order:25},
   {route:'/inventory',label:'Inventory',labelKey:'nav.inventory',module:'inventory',order:30},
   {route:'/skills',label:'Skills',labelKey:'nav.skills',module:'skills',order:35},

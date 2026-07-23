@@ -1,0 +1,3 @@
+import { Award, CheckCircle2, Gift } from 'lucide-react';
+const cards=[['completed','Completed',CheckCircle2],['points','Achievement points',Award],['claimed','Rewards claimed',Gift]];
+export default function AchievementSummary({summary}){return <div className="grid gap-3 sm:grid-cols-3">{cards.map(([key,label,Icon])=><div key={key} className="rounded-lg border border-white/10 bg-runtime-surface p-4"><Icon size={18} className="text-runtime-accent"/><p className="mt-4 text-2xl font-semibold">{summary[key]}{key==='completed'?` / ${summary.total}`:''}</p><p className="text-xs uppercase tracking-wider text-slate-500">{label}</p></div>)}</div>}

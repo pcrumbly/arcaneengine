@@ -1,0 +1,136 @@
+{
+  "name": "AchievementDefinition",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "hidden": {
+      "type": "boolean",
+      "default": false
+    },
+    "points": {
+      "type": "number",
+      "default": 0
+    },
+    "criteria_logic": {
+      "type": "string",
+      "enum": [
+        "all",
+        "any"
+      ],
+      "default": "all"
+    },
+    "criteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "quest_completed",
+              "item_quantity",
+              "skill_rank",
+              "currency",
+              "resource",
+              "attribute",
+              "combat_wins"
+            ]
+          },
+          "target_key": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "rewards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "currency",
+              "resource",
+              "item",
+              "tag"
+            ]
+          },
+          "key": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        "required": [
+          "type",
+          "key"
+        ]
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "key",
+    "name",
+    "criteria_logic",
+    "criteria"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

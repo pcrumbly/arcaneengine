@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { handleCombatCommand } from '../../shared/combat.ts';
+import { handleAchievementCommand } from '../../shared/achievements.ts';
 import { handleSettingsCommand } from '../../shared/settings.ts';
 import { handleContentCommand } from '../../shared/content.ts';
 import { enforceCommandRate, handleOperationsCommand } from '../../shared/operations.ts';
@@ -20,6 +21,7 @@ const domainHandlers:any={
   dialogue:(base44:any,user:any,body:any,requestId:string)=>handleDialogueCommand(base44,user,body,requestId),
   party:(base44:any,user:any,body:any,requestId:string)=>handlePartyCommand(base44,user,body,requestId),
   combat:(base44:any,user:any,body:any,requestId:string)=>handleCombatCommand(base44,user,body,requestId),
+  achievements:(base44:any,user:any,body:any,requestId:string)=>handleAchievementCommand(base44,user,body,requestId),
   settings:(base44:any,user:any,body:any)=>handleSettingsCommand(base44,user,body),
   content:(base44:any,user:any,body:any)=>handleContentCommand(base44,user,body),
   studio:(base44:any,user:any,body:any)=>handleStudioAuthoringCommand(base44,user,body),
