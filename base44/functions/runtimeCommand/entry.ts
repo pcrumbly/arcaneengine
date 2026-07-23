@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     const rateLimitResponse = await enforceCommandRate(base44, user, command);
     if (rateLimitResponse) return rateLimitResponse;
     if (['GET_NOTIFICATIONS','MARK_NOTIFICATION_READ','GET_OPERATIONS'].includes(command)) return await handleOperationsCommand(base44, user, body);
-    if (['START_DIALOGUE','SELECT_DIALOGUE_OPTION'].includes(command)) return await handleDialogueCommand(base44, user, body, requestId);
+    if (['GET_NPC_INTERACTION','EXECUTE_NPC_ACTION','START_DIALOGUE','SELECT_DIALOGUE_OPTION'].includes(command)) return await handleDialogueCommand(base44, user, body, requestId);
     if (['GET_PARTY','CREATE_PARTY','ADD_PARTY_MEMBER','REMOVE_PARTY_MEMBER','DISBAND_PARTY'].includes(command)) return await handlePartyCommand(base44, user, body, requestId);
     if (['GET_COMBAT','START_ENCOUNTER','SELECT_COMBAT_ACTION','COMPLETE_COMBAT'].includes(command)) return await handleCombatCommand(base44, user, body, requestId);
     if (['GET_SETTINGS','SAVE_SETTINGS','SAVE_KEY_BINDING','RESET_KEY_BINDINGS'].includes(command)) return await handleSettingsCommand(base44, user, body);

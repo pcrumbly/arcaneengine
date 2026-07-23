@@ -35,6 +35,50 @@
         "type": "string"
       }
     },
+    "interaction_actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "talk",
+              "inspect",
+              "service"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "dialogue_graph_id": {
+            "type": "string"
+          },
+          "conditions": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "effects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "type"
+        ]
+      }
+    },
     "dialogue_graph_ids": {
       "type": "array",
       "items": {
@@ -61,7 +105,6 @@
     "game_id",
     "content_version",
     "key",
-    "name",
-    "actions"
+    "name"
   ]
 }
