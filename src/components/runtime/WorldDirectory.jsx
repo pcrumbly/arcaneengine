@@ -1,0 +1,16 @@
+import { useMemo, useState } from 'react';
+import { LoaderCircle, MapPin, Navigation, Search } from 'lucide-react';
+
+export default function WorldDirectory({ locations, exits, currentLocationId, busy, onMove }) {
+  const [query, setQuery] = useState('');
+  const exitByDestination = useMemo(() => new Map(exits.map(exit => [exit.to_location_id, exit])), [exits]);
+  const visible = useMemo(() => locations.filter(location => `${location.name} ${location.description || ''} ${location.location_type || ''}`.toLowerCase().includes(query.toLowerCase())).sort((a, b) => Number(b.id === currentLocationId) - Number(a.id === currentLocationId) || Number(exitByDestination.has(b.id)) - Number(exitByDestination.has(a.id)) || a.name.localeCompare(b.name)), [locations, query, currentLocationId, exitByDestination]);
+  return <section className="rounded-lg border border-white/10 bg-runtime-surface p-5">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs uppercase tracking-[.22em] text-runtime-accent">World directory</p><h2 className="mt-1 text-lg font-semibold">Known locations</h2></div><label className="relative block sm:w-72"><span className="sr-only">Search locations</span><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search locations" className="w-full rounded-md border border-white/10 bg-runtime px-9 py-2 text-sm text-runtime-text placeholder:text-slate-500"/></label></div>
+    <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">{visible.map(location => {
+      const exit = exitByDestination.get(location.id), current = location.id === currentLocationId;
+      return <article key={location.id} className={`rounded-md border p-3 ${current ? 'border-runtime-accent bg-runtime-accent/10' : 'border-white/10 bg-white/[.025]'}`}><div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="flex items-center gap-2 text-sm font-semibold"><MapPin size={14} className={current ? 'text-runtime-accent' : 'text-slate-500'}/>{location.name}</h3><p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{location.description || location.location_type}</p></div>{current ? <span className="text-[11px] text-runtime-accent">Current</span> : exit ? <button disabled={busy} onClick={() => onMove(exit)} className="inline-flex shrink-0 items-center gap-1 rounded-md bg-runtime-accent px-2.5 py-1.5 text-xs font-medium text-slate-950 disabled:opacity-50">{busy ? <LoaderCircle size={13} className="animate-spin"/> : <Navigation size={13}/>}Travel</button> : null}</div></article>;
+    })}</div>
+    {!visible.length && <p className="mt-4 rounded-md border border-dashed border-white/10 p-4 text-sm text-slate-500">No locations match your search.</p>}
+  </section>;
+}
