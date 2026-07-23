@@ -1,4 +1,5 @@
 import { handleCombatCommand } from './combat.ts';
+import { authorizedGameIds, requireGamePermission } from './authorization.ts';
 
 const audit=async(base44,user,character,command,requestId,details)=>base44.asServiceRole.entities.AuditEvent.create({game_id:character.game_id,actor_user_id:user.id,character_id:character.id,command,request_id:requestId,result:'accepted',details,occurred_at:new Date().toISOString()});
 const assertTest=(character)=>{if(!character.is_test_character)throw new Error('Simulation commands are restricted to test characters.');};
@@ -49,10 +50,10 @@ async function mutateTestCharacter(base44,user,character,body,requestId){
 }
 
 export async function handleSimulationCommand(base44,user,body,requestId){
-  if(user.role!=='admin')return Response.json({error:'Forbidden'},{status:403});
-  if(body.command==='GET_SIMULATION')return Response.json(await loadSimulation(base44,body));
-  if(body.command==='CREATE_TEST_CHARACTER')return await createTestCharacter(base44,user,body,requestId);
-  const duplicate=await base44.asServiceRole.entities.AuditEvent.filter({actor_user_id:user.id,request_id:requestId,result:'accepted'},'-occurred_at',1),character=await base44.asServiceRole.entities.Character.get(body.characterId);assertTest(character);
+  if(body.command==='GET_SIMULATION'){const allowed=await authorizedGameIds(base44,user,'simulation:read');if(allowed&&allowed.length===0)return Response.json({error:'Forbidden'},{status:403});const scopedBody=allowed?{...body,gameId:allowed.includes(body.gameId)?body.gameId:allowed[0]}:body;return Response.json(await loadSimulation(base44,scopedBody));}
+  if(body.command==='CREATE_TEST_CHARACTER'){const access=await requireGamePermission(base44,user,body.gameId,'simulation:write');if(access)return access;return await createTestCharacter(base44,user,body,requestId);}
+  const characterAccessTarget=await base44.asServiceRole.entities.Character.get(body.characterId),access=await requireGamePermission(base44,user,characterAccessTarget.game_id,'simulation:write');if(access)return access;
+  const duplicate=await base44.asServiceRole.entities.AuditEvent.filter({actor_user_id:user.id,request_id:requestId,result:'accepted'},'-occurred_at',1),character=characterAccessTarget;assertTest(character);
   if(body.command==='SIM_START_ENCOUNTER'){const response=await handleCombatCommand(base44,user,{...body,command:'START_ENCOUNTER'},requestId);if(!response.ok)return response;const combatData=await response.json();return Response.json({...await loadSimulation(base44,{gameId:character.game_id,contentVersion:character.content_version,characterId:character.id}),startedCombatId:combatData.combat?.id||null});}
   if(body.command==='SIM_REPLAY_COMBAT'){const replay=await replayCombat(base44,character,body.combatId);if(replay.error)return Response.json({error:replay.error},{status:403});await audit(base44,user,character,body.command,requestId,{combat_id:body.combatId,matched:replay.matched,rolls_checked:replay.rolls_checked});return Response.json({...await loadSimulation(base44,{gameId:character.game_id,contentVersion:character.content_version,characterId:character.id}),replay});}
   if(!duplicate.length){const errorResponse=await mutateTestCharacter(base44,user,character,body,requestId);if(errorResponse)return errorResponse;}

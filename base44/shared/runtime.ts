@@ -3,6 +3,7 @@ import { loadVisibleNpcs } from './dialogue.ts';
 import { isMovementLocked, movePartyWithLeader } from './party.ts';
 import { claimQuestReward, createObjectiveRows, publishQuestEvent, refreshQuestProgress, selectQuestBranch } from './quests.ts';
 import { handleInventoryCommand } from './inventory.ts';
+import { authorizedGameIds } from './authorization.ts';
 
 async function loadInventory(base44:any,user:any,characterId:string){
   const character=await base44.entities.Character.get(characterId);
@@ -44,8 +45,8 @@ async function loadState(base44:any,user:any,characterId?:string){
 }
 
 async function studioOverview(base44:any,user:any){
-  if(user.role!=='admin')return Response.json({error:'Forbidden'},{status:403});
-  const [games,releases,packs,locations,connections,quests,encounters,characters]=await Promise.all([base44.asServiceRole.entities.Game.list(),base44.asServiceRole.entities.ContentRelease.list('-created_date',50),base44.asServiceRole.entities.ContentPack.list('-created_date',100),base44.asServiceRole.entities.LocationDefinition.list(),base44.asServiceRole.entities.Connection.list(),base44.asServiceRole.entities.QuestDefinition.list(),base44.asServiceRole.entities.EncounterDefinition.list(),base44.asServiceRole.entities.Character.list('-updated_date',100)]);
+  const allowedGameIds=await authorizedGameIds(base44,user,'studio:read');if(allowedGameIds&&allowedGameIds.length===0)return Response.json({error:'Forbidden'},{status:403});
+  const [allGames,allReleases,allPacks,allLocations,allConnections,allQuests,allEncounters,allCharacters]=await Promise.all([base44.asServiceRole.entities.Game.list(),base44.asServiceRole.entities.ContentRelease.list('-created_date',50),base44.asServiceRole.entities.ContentPack.list('-created_date',100),base44.asServiceRole.entities.LocationDefinition.list(),base44.asServiceRole.entities.Connection.list(),base44.asServiceRole.entities.QuestDefinition.list(),base44.asServiceRole.entities.EncounterDefinition.list(),base44.asServiceRole.entities.Character.list('-updated_date',100)]),within=(row:any)=>!allowedGameIds||allowedGameIds.includes(row.game_id||row.id),games=allGames.filter(within),releases=allReleases.filter(within),packs=allPacks.filter(within),locations=allLocations.filter(within),connections=allConnections.filter(within),quests=allQuests.filter(within),encounters=allEncounters.filter(within),characters=allCharacters.filter(within);
   return Response.json({games,releases,packs,characters,counts:{games:games.length,releases:releases.length,packs:packs.length,locations:locations.length,connections:connections.length,quests:quests.length,encounters:encounters.length}});
 }
 

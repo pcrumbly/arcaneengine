@@ -1,39 +1,38 @@
 {
-  "name": "EffectDefinition",
+  "name": "GameMembership",
   "type": "object",
   "properties": {
     "game_id": {
       "type": "string"
     },
-    "content_version": {
+    "user_id": {
       "type": "string"
     },
-    "key": {
-      "type": "string"
+    "role": {
+      "type": "string",
+      "enum": [
+        "owner",
+        "designer",
+        "writer",
+        "tester",
+        "operator",
+        "viewer"
+      ]
     },
-    "name": {
-      "type": "string"
-    },
-    "effects": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": true
-      }
-    },
-    "tags": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "suspended"
+      ],
+      "default": "active"
     }
   },
   "required": [
     "game_id",
-    "content_version",
-    "key",
-    "name",
-    "effects"
+    "user_id",
+    "role",
+    "status"
   ],
   "rls": {
     "read": {
