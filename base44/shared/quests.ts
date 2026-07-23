@@ -13,7 +13,7 @@ async function matches(base44:any,character:any,objective:any,event:any){
   if(type==='defeatEntity')return event.event_type==='combat.entity.defeated'&&targetMatches(objective,payload.entity_definition_id);
   if(type==='surviveEncounter')return event.event_type==='combat.encounter.won'&&targetMatches(objective,payload.encounter_definition_id);
   if(type==='useAbility')return event.event_type==='combat.ability.used'&&targetMatches(objective,payload.ability_id);
-  if(type==='selectDialogueResponse')return event.event_type==='dialogue.option.selected'&&targetMatches(objective,payload.option_key);
+  if(type==='selectDialogueResponse')return event.event_type==='dialogue.option.selected'&&targetMatches(objective,payload.option_key)&&(!objective.dialogueGraphId||[payload.dialogue_graph_id,payload.dialogue_graph_key].includes(objective.dialogueGraphId))&&(!objective.nodeKey||objective.nodeKey===payload.node_key);
   if(type==='completeQuest')return event.event_type==='quest.completed'&&targetMatches(objective,payload.definition_id);
   if(type==='customEvent')return event.event_type===(objective.eventType||objective.targetId);
   if(type==='reachAttributeThreshold')return Number(character.attributes?.[objective.attributeId||objective.targetId]||0)>=Number(objective.value||objective.count||1);

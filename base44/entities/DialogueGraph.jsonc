@@ -21,7 +21,75 @@
       "type": "array",
       "items": {
         "type": "object",
-        "additionalProperties": true
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "narration"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "nextNodeKey": {
+                  "type": "string"
+                },
+                "conditions": {
+                  "type": "object",
+                  "additionalProperties": true
+                },
+                "effects": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                },
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "event_type": {
+                        "type": "string"
+                      },
+                      "payload": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "required": [
+                      "event_type"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "key",
+                "label"
+              ]
+            }
+          }
+        },
+        "required": [
+          "key",
+          "text"
+        ]
       }
     },
     "tags": {
