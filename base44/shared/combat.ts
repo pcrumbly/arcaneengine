@@ -42,10 +42,10 @@ async function applyStatus(base44:any,combat:any,target:any,ability:any,record:a
   const stacks=definition.stacking==='stack'?Math.min(maximum,Number(existing?.stacks||0)+incoming):definition.stacking==='refresh'&&existing?Number(existing.stacks||1):Math.min(maximum,incoming);
   const remainingTurns=definition.duration_type==='turns'?Math.max(1,Number(record.remainingTurns||1)):undefined;
   const expiresAt=definition.duration_type==='time'?new Date(Date.now()+Math.max(1,Number(record.durationSeconds||60))*1000).toISOString():undefined;
-  const payload=expiresAt?{...(existing?.payload||{}),expires_at:expiresAt}:existing?.payload||{};
-  const values:any={stacks,source_id:ability.id,payload,version:Number(existing?.version||0)+1};if(remainingTurns!==undefined)values.remaining_turns=remainingTurns;
+  const payload=existing?.payload||{};
+  const values:any={stacks,source_id:ability.id,payload,expires_at:expiresAt,started_at:existing?.started_at||new Date().toISOString(),version:Number(existing?.version||0)+1};if(remainingTurns!==undefined)values.remaining_turns=remainingTurns;
   if(existing){await base44.asServiceRole.entities.ActiveEffect.update(existing.id,values);if(rows.length>1)await base44.asServiceRole.entities.ActiveEffect.deleteMany({id:{'$in':rows.slice(1).map((row:any)=>row.id)}});}
-  else await base44.asServiceRole.entities.ActiveEffect.create({game_id:combat.game_id,content_version:combat.content_version,target_type:'combat_participant',target_id:target.id,combat_instance_id:combat.id,status_key:definition.key,source_id:ability.id,stacks,remaining_turns:remainingTurns,payload,version:1});
+  else await base44.asServiceRole.entities.ActiveEffect.create({game_id:combat.game_id,content_version:combat.content_version,target_type:'combat_participant',target_id:target.id,combat_instance_id:combat.id,status_key:definition.key,source_id:ability.id,stacks,remaining_turns:remainingTurns,started_at:new Date().toISOString(),expires_at:expiresAt,payload,version:1});
   return {...record,statusName:definition.name,stacks,remainingTurns};
 }
 async function tickStatuses(base44:any,combat:any,participantId:string,rules:any,cursor:number){
@@ -53,7 +53,7 @@ async function tickStatuses(base44:any,combat:any,participantId:string,rules:any
   const active=await base44.asServiceRole.entities.ActiveEffect.filter({combat_instance_id:combat.id,target_type:'combat_participant',target_id:participant.id},'created_date',50);
   for(const effect of active){
     const definition=(await base44.asServiceRole.entities.StatusDefinition.filter({game_id:combat.game_id,content_version:combat.content_version,key:effect.status_key},'-created_date',1))[0];if(!definition)continue;
-    const timedOut=definition.duration_type==='time'&&effect.payload?.expires_at&&new Date(effect.payload.expires_at).getTime()<=Date.now(),outcomes:any[]=[];
+    const timedOut=definition.duration_type==='time'&&(effect.expires_at||effect.payload?.expires_at)&&new Date(effect.expires_at||effect.payload.expires_at).getTime()<=Date.now(),outcomes:any[]=[];
     if(!timedOut){const statusEffects=await expandRuleEffects(base44,{actor:participant,target:participant,combat},definition.effects||[]);for(const statusEffect of statusEffects){cursor+=1;const resolved=resolveCombatEffect(statusEffect,{actor:participant,target:participant,resources,roll:randomAt(combat.seed,cursor),rules});resources=resolved.resources;outcomes.push(resolved.record);}}
     const remaining=definition.duration_type==='turns'?Number(effect.remaining_turns||1)-1:null,expired=timedOut||(remaining!==null&&remaining<=0);
     if(expired)await base44.asServiceRole.entities.ActiveEffect.delete(effect.id);else if(remaining!==null)await base44.asServiceRole.entities.ActiveEffect.update(effect.id,{remaining_turns:remaining,version:Number(effect.version||1)+1});

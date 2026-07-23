@@ -34,6 +34,14 @@
     "remaining_turns": {
       "type": "number"
     },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "payload": {
       "type": "object",
       "additionalProperties": true

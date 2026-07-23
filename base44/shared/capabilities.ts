@@ -33,7 +33,7 @@ async function loadProfile(base44:any,character:any){
     base44.asServiceRole.entities.FormulaDefinition.filter({game_id:character.game_id,content_version:character.content_version},'name',200)
   ]);
   const equipped=items.filter((item:any)=>item.equipped_slot),itemDefinitions=await Promise.all(equipped.map((item:any)=>base44.asServiceRole.entities.ItemDefinition.get(item.definition_id)));
-  const resolvedEffects=effects.map((effect:any)=>({...effect,definition:statusDefinitions.find((definition:any)=>definition.key===effect.status_key)||null})),resolvedEquipment=equipped.map((item:any,index:number)=>({...item,definition:itemDefinitions[index]}));
+  const expiredEffects=effects.filter((effect:any)=>effect.expires_at&&new Date(effect.expires_at).getTime()<=Date.now());if(expiredEffects.length)await base44.asServiceRole.entities.ActiveEffect.deleteMany({id:{'$in':expiredEffects.map((effect:any)=>effect.id)}});const resolvedEffects=effects.filter((effect:any)=>!expiredEffects.some((expired:any)=>expired.id===effect.id)).map((effect:any)=>({...effect,definition:statusDefinitions.find((definition:any)=>definition.key===effect.status_key)||null})),resolvedEquipment=equipped.map((item:any,index:number)=>({...item,definition:itemDefinitions[index]}));
   return {character,attributeDefinitions,derivedValues:resolveDerivedCharacterValues(character,formulas,resolvedEquipment,resolvedEffects),effects:resolvedEffects,skills:skills.map((record:any)=>({...record,definition:skillDefinitions.find((definition:any)=>definition.id===record.skill_definition_id)||null})),equipment:resolvedEquipment};
 }
 async function validateLoadout(base44:any,character:any,values:any){
