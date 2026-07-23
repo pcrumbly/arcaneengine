@@ -131,7 +131,55 @@
     "header_indicators": {
       "type": "array",
       "items": {
-        "type": "string"
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "character",
+                  "location",
+                  "resource",
+                  "currency",
+                  "attribute",
+                  "text"
+                ]
+              },
+              "key": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "label_key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              },
+              "value_key": {
+                "type": "string"
+              },
+              "aggregate": {
+                "type": "string",
+                "enum": [
+                  "first",
+                  "sum"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        ]
       }
     },
     "character_defaults": {

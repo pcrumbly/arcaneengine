@@ -50,6 +50,10 @@
         "type": "number"
       }
     },
+    "ai_policy": {
+      "type": "object",
+      "additionalProperties": true
+    },
     "status": {
       "type": "string",
       "enum": [

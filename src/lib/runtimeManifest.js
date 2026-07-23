@@ -3,7 +3,7 @@ const registered=new Map(engineModules.map(item=>[item.route,item]));
 export function resolveNavigation(game,translations={}) {
   const configured = game?.navigation?.length ? game.navigation : engineModules;
   const modules = new Set(game?.enabled_modules || []);
-  return configured.filter(item => engineModuleRoutes.has(item.route) && item.visible !== false && (!item.module || !modules.size || modules.has(item.module) || (item.module==='journal'&&modules.has('quests')) || ['studio','settings','messages','account'].includes(item.module))).map(item=>{const definition=registered.get(item.route),labelKey=item.label_key||definition?.labelKey;return {...definition,...item,label:translations[labelKey]||item.label||definition?.label};}).sort((a,b) => (a.order || 0) - (b.order || 0));
+  return configured.filter(item => (engineModuleRoutes.has(item.route) || /^\/module\/[a-z0-9._-]+$/i.test(item.route)) && item.visible !== false && (!item.module || !modules.size || modules.has(item.module) || (item.module==='journal'&&modules.has('quests')) || ['studio','settings','messages','account'].includes(item.module))).map(item=>{const definition=registered.get(item.route),labelKey=item.label_key||definition?.labelKey;return {...definition,...item,label:translations[labelKey]||item.label||definition?.label};}).sort((a,b) => (a.order || 0) - (b.order || 0));
 }
 function rgb(hex, fallback) {
   if (!/^#[0-9a-f]{6}$/i.test(hex || '')) return fallback;

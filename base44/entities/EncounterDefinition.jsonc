@@ -32,6 +32,29 @@
       ],
       "default": "individual_initiative"
     },
+    "ai_policy": {
+      "type": "object",
+      "properties": {
+        "ability_selection": {
+          "type": "string",
+          "enum": [
+            "first_available",
+            "random_available",
+            "highest_impact",
+            "lowest_cost"
+          ]
+        },
+        "target_selection": {
+          "type": "string",
+          "enum": [
+            "first_active",
+            "random_active",
+            "lowest_primary_resource",
+            "highest_primary_resource"
+          ]
+        }
+      }
+    },
     "participant_templates": {
       "type": "array",
       "items": {

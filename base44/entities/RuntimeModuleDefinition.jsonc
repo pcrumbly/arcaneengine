@@ -1,0 +1,50 @@
+{
+  "name": "RuntimeModuleDefinition",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "title_key": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "description_key": {
+      "type": "string"
+    },
+    "route_slug": {
+      "type": "string"
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "key",
+    "name",
+    "route_slug"
+  ]
+}
