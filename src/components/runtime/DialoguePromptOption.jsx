@@ -1,0 +1,6 @@
+import { useState } from 'react';
+
+export default function DialoguePromptOption({ option, busy, onSelect }) {
+  const [value, setValue] = useState(''), prompt = option.prompt;
+  return <form onSubmit={event => { event.preventDefault(); onSelect(option.key, value); }} className="rounded-md border border-blue-400/20 bg-blue-400/5 p-3"><label className="text-xs font-medium text-blue-200" htmlFor={`prompt-${option.key}`}>{prompt.label || option.label}</label><div className="mt-2 flex gap-2"><input id={`prompt-${option.key}`} type={prompt.input_type === 'number' ? 'number' : 'text'} min={prompt.minimum} max={prompt.maximum} maxLength={prompt.max_length || 200} required={prompt.required !== false} value={value} onChange={event => setValue(event.target.value)} placeholder={prompt.placeholder || ''} disabled={busy} className="min-w-0 flex-1 rounded border border-white/10 bg-runtime px-3 py-2 text-sm"/><button type="submit" disabled={busy} className="rounded bg-blue-400/15 px-3 py-2 text-sm text-blue-200 disabled:opacity-50">{option.label}</button></div></form>;
+}

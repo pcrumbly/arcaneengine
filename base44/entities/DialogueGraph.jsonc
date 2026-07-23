@@ -110,6 +110,43 @@
                     ]
                   }
                 },
+                "prompt": {
+                  "type": "object",
+                  "properties": {
+                    "variable_key": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "input_type": {
+                      "type": "string",
+                      "enum": [
+                        "text",
+                        "number"
+                      ]
+                    },
+                    "placeholder": {
+                      "type": "string"
+                    },
+                    "required": {
+                      "type": "boolean"
+                    },
+                    "minimum": {
+                      "type": "number"
+                    },
+                    "maximum": {
+                      "type": "number"
+                    },
+                    "max_length": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "variable_key",
+                    "input_type"
+                  ]
+                },
                 "effects": {
                   "type": "array",
                   "items": {
