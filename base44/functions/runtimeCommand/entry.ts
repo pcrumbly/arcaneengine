@@ -3,16 +3,28 @@ import { handleCombatCommand } from '../../shared/combat.ts';
 import { handleSettingsCommand } from '../../shared/settings.ts';
 import { handleContentCommand } from '../../shared/content.ts';
 import { enforceCommandRate, handleOperationsCommand } from '../../shared/operations.ts';
-import { evaluateCondition, resolveCharacterEffects } from '../../shared/rules.ts';
-import { handleDialogueCommand, loadVisibleNpcs } from '../../shared/dialogue.ts';
-import { handlePartyCommand, isMovementLocked, movePartyWithLeader } from '../../shared/party.ts';
+import { handleDialogueCommand } from '../../shared/dialogue.ts';
+import { handlePartyCommand } from '../../shared/party.ts';
 import { handleStudioAuthoringCommand } from '../../shared/studio.ts';
 import { handleCapabilityCommand } from '../../shared/capabilities.ts';
-import { claimQuestReward, createObjectiveRows, publishQuestEvent, refreshQuestProgress, selectQuestBranch } from '../../shared/quests.ts';
-import { handleInventoryCommand } from '../../shared/inventory.ts';
 import { handleSimulationCommand } from '../../shared/simulation.ts';
 import { handlePlatformCommand } from '../../shared/platform.ts';
 import { getCommandContract, publicCommandContracts, validateCommandPayload } from '../../shared/commandContracts.ts';
+import { handleRuntimeCommand } from '../../shared/runtime.ts';
+
+const domainHandlers:any={
+  operations:(base44:any,user:any,body:any)=>handleOperationsCommand(base44,user,body),
+  platform:(base44:any,user:any,body:any)=>handlePlatformCommand(base44,user,body),
+  dialogue:(base44:any,user:any,body:any,requestId:string)=>handleDialogueCommand(base44,user,body,requestId),
+  party:(base44:any,user:any,body:any,requestId:string)=>handlePartyCommand(base44,user,body,requestId),
+  combat:(base44:any,user:any,body:any,requestId:string)=>handleCombatCommand(base44,user,body,requestId),
+  settings:(base44:any,user:any,body:any)=>handleSettingsCommand(base44,user,body),
+  content:(base44:any,user:any,body:any)=>handleContentCommand(base44,user,body),
+  studio:(base44:any,user:any,body:any)=>handleStudioAuthoringCommand(base44,user,body),
+  capabilities:(base44:any,user:any,body:any,requestId:string)=>handleCapabilityCommand(base44,user,body,requestId),
+  simulation:(base44:any,user:any,body:any,requestId:string)=>handleSimulationCommand(base44,user,body,requestId),
+  runtime:(base44:any,user:any,body:any,requestId:string)=>handleRuntimeCommand(base44,user,body,requestId)
+};
 
 Deno.serve(async (req) => {
   try {
@@ -28,189 +40,9 @@ Deno.serve(async (req) => {
     if (contract.domain === 'contracts') return Response.json(publicCommandContracts());
     const rateLimitResponse = await enforceCommandRate(base44, user, command);
     if (rateLimitResponse) return rateLimitResponse;
-    if (contract.domain === 'operations') return await handleOperationsCommand(base44, user, body);
-    if (contract.domain === 'platform') return await handlePlatformCommand(base44, user, body);
-    if (contract.domain === 'dialogue') return await handleDialogueCommand(base44, user, body, requestId);
-    if (contract.domain === 'party') return await handlePartyCommand(base44, user, body, requestId);
-    if (contract.domain === 'combat') return await handleCombatCommand(base44, user, body, requestId);
-    if (contract.domain === 'settings') return await handleSettingsCommand(base44, user, body);
-    if (contract.domain === 'content') return await handleContentCommand(base44, user, body);
-    if (contract.domain === 'studio') return await handleStudioAuthoringCommand(base44, user, body);
-    if (contract.domain === 'capabilities') return await handleCapabilityCommand(base44, user, body, requestId);
-    if (contract.domain === 'simulation') return await handleSimulationCommand(base44, user, body, requestId);
-    const loadInventory = async (characterId) => {
-      const character = await base44.entities.Character.get(characterId);
-      const [containers, items, inventoryEvents] = await Promise.all([
-        base44.asServiceRole.entities.Container.filter({ character_id: character.id }, 'name', 30),
-        base44.asServiceRole.entities.ItemInstance.filter({ character_id: character.id }, '-acquired_at', 200),
-        base44.asServiceRole.entities.AuditEvent.filter({ actor_user_id: user.id, character_id: character.id, result: 'accepted' }, '-occurred_at', 200)
-      ]);
-      const definitionIds = [...new Set(items.map((item) => item.definition_id))];
-      const definitions = await Promise.all(definitionIds.map((id) => base44.asServiceRole.entities.ItemDefinition.get(id)));
-      const abilityIds = [...new Set(definitions.flatMap((definition) => definition.granted_ability_ids || []))];
-      const abilities = await Promise.all(abilityIds.map((id) => base44.asServiceRole.entities.AbilityDefinition.get(id)));
-      const requirementResults = await Promise.all(definitions.map((definition) => evaluateCondition(base44, { character }, definition.requirements)));
-      const rows = items.map((item) => { const definitionIndex = definitions.findIndex((current) => current.id === item.definition_id), definition = definitions[definitionIndex]; return { ...item, definition, requirements_met: requirementResults[definitionIndex], granted_abilities: (definition.granted_ability_ids || []).map((id) => abilities.find((ability) => ability.id === id)).filter(Boolean), container: containers.find((container) => container.id === item.container_id) || null, history: inventoryEvents.filter((event) => event.details?.item_id === item.id || event.details?.item_ids?.includes(item.id)).slice(0, 12) }; });
-      const carried = rows.filter((item) => item.container?.container_type !== 'loot');
-      const loot = rows.filter((item) => item.container?.container_type === 'loot');
-      const weight = carried.reduce((sum, item) => sum + (item.definition.weight || 0) * item.quantity, 0);
-      const lootWeight = loot.reduce((sum, item) => sum + (item.definition.weight || 0) * item.quantity, 0);
-      const capacity = containers.filter((container) => container.container_type !== 'loot').reduce((sum, container) => sum + (container.capacity || 0), 0);
-      return { character, containers, items: rows, summary: { weight, capacity, lootWeight, canCollectLoot: capacity <= 0 || weight + lootWeight <= capacity, equipped: carried.filter((item) => item.equipped_slot).length, loot: loot.reduce((sum, item) => sum + item.quantity, 0) } };
-    };
-    const loadQuests = async (characterId) => {
-      const character = await base44.entities.Character.get(characterId);
-      await refreshQuestProgress(base44, character);
-      const currentDefinitions = await base44.asServiceRole.entities.QuestDefinition.filter({ game_id: character.game_id, content_version: character.content_version }, 'name', 100);
-      const instances = await base44.asServiceRole.entities.QuestInstance.filter({ character_id: character.id }, '-updated_date', 100);
-      const missingIds = [...new Set(instances.map((instance) => instance.definition_id).filter((id) => !currentDefinitions.some((definition) => definition.id === id)))];
-      const legacyDefinitions = await Promise.all(missingIds.map((id) => base44.asServiceRole.entities.QuestDefinition.get(id)));
-      const definitions = [...currentDefinitions, ...legacyDefinitions];
-      const rows = await Promise.all(instances.map(async (instance) => { const definition = definitions.find((item) => item.id === instance.definition_id), objectives = await base44.asServiceRole.entities.ObjectiveInstance.filter({ quest_instance_id: instance.id }, 'objective_key', 100); return { ...instance, definition, objectives: objectives.map((objective) => ({ ...objective, label: definition?.objective_graph?.objectives?.find((item) => item.key === objective.objective_key)?.label || objective.objective_key })) }; }));
-      const instancedIds = new Set(instances.filter((instance) => instance.state !== 'ABANDONED').map((instance) => instance.definition_id));
-      const availability = await Promise.all(currentDefinitions.map((definition) => evaluateCondition(base44, { character }, definition.availability_conditions)));
-      const availableDefinitions = currentDefinitions.filter((definition, index) => availability[index]);
-      return { character, available: availableDefinitions.filter((definition) => !instancedIds.has(definition.id)), quests: rows };
-    };
-    if (command === 'STUDIO_OVERVIEW') {
-      if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
-      const [games, releases, packs, locations, connections, quests, encounters, characters] = await Promise.all([
-        base44.asServiceRole.entities.Game.list(),
-        base44.asServiceRole.entities.ContentRelease.list('-created_date', 50),
-        base44.asServiceRole.entities.ContentPack.list('-created_date', 100),
-        base44.asServiceRole.entities.LocationDefinition.list(),
-        base44.asServiceRole.entities.Connection.list(),
-        base44.asServiceRole.entities.QuestDefinition.list(),
-        base44.asServiceRole.entities.EncounterDefinition.list(),
-        base44.asServiceRole.entities.Character.list('-updated_date', 100)
-      ]);
-      return Response.json({ games, releases, packs, characters, counts: { games: games.length, releases: releases.length, packs: packs.length, locations: locations.length, connections: connections.length, quests: quests.length, encounters: encounters.length } });
-    }
-
-    if (command === 'CREATE_CHARACTER') {
-      const game = await base44.asServiceRole.entities.Game.get(body.gameId);
-      const releases = await base44.asServiceRole.entities.ContentRelease.filter({ game_id: game.id, status: 'published' }, '-published_at', 1);
-      const release = releases[0];
-      if (!release) return Response.json({ error: 'This game has no published content.' }, { status: 409 });
-      const starts = await base44.asServiceRole.entities.LocationDefinition.filter({ game_id: game.id, content_version: release.version, tags: { '$in': ['start'] } }, '-created_date', 1);
-      if (!starts[0]) return Response.json({ error: 'This game has no starting location.' }, { status: 409 });
-      const definitions = await base44.asServiceRole.entities.AttributeDefinition.filter({ game_id: game.id, content_version: release.version }, 'name', 200);
-      const definedAttributes = Object.fromEntries(definitions.filter((item) => item.category !== 'resource').map((item) => [item.key, item.default_value]));
-      const definedResources = Object.fromEntries(definitions.filter((item) => item.category === 'resource').map((item) => [item.key, item.default_value]));
-      const defaults = game.character_defaults || {}, rules = game.rules || {};
-      const character = await base44.entities.Character.create({ game_id: game.id, content_version: release.version, name: String(body.name || '').trim(), current_location_id: starts[0].id, attributes: { ...definedAttributes, ...(defaults.attributes || {}) }, resources: { ...definedResources, ...(defaults.resources || {}) }, currency: defaults.currency || {}, tags: defaults.tags || [], version: 1 });
-      const container = await base44.asServiceRole.entities.Container.create({ game_id: game.id, character_id: character.id, name: 'Carried items', container_type: 'character', capacity: Number(rules.inventory_capacity || 0), version: 1 });
-      const starters = await base44.asServiceRole.entities.ItemDefinition.filter({ game_id: game.id, content_version: release.version, tags: { '$in': ['starter'] } }, 'name', 20);
-      if (starters.length) await base44.asServiceRole.entities.ItemInstance.bulkCreate(starters.map((definition) => ({ game_id: game.id, content_version: release.version, definition_id: definition.id, container_id: container.id, character_id: character.id, quantity: definition.stack_limit > 1 ? Math.min(definition.stack_limit, Number(rules.starter_stack_quantity || 1)) : 1, quality: 'standard', bound_state: 'unbound', custom_properties: {}, applied_modifications: [], acquired_at: new Date().toISOString(), version: 1 })));
-    }
-
-    if (command === 'GET_INVENTORY') return Response.json(await loadInventory(body.characterId));
-    if (['SPLIT_ITEM','MERGE_ITEM','TRANSFER_ITEM','BULK_TRANSFER_ITEMS','COLLECT_LOOT'].includes(command)) {
-      const character = await base44.entities.Character.get(body.characterId);
-      const result = await handleInventoryCommand(base44, user, character, body, requestId);
-      if (result) return result;
-      return Response.json(await loadInventory(character.id));
-    }
-    if (command === 'GET_QUESTS') return Response.json(await loadQuests(body.characterId));
-    if (command === 'SELECT_QUEST_BRANCH' || command === 'SELECT_QUEST_REWARD') {
-      const character = await base44.entities.Character.get(body.characterId);
-      const result = command === 'SELECT_QUEST_BRANCH' ? await selectQuestBranch(base44, character, body.questInstanceId, body.questVersion, body.branchKey, requestId) : await claimQuestReward(base44, character, body.questInstanceId, body.questVersion, body.choiceKey);
-      if (result) return result;
-      return Response.json(await loadQuests(character.id));
-    }
-
-    if (command === 'ACCEPT_QUEST') {
-      const character = await base44.entities.Character.get(body.characterId);
-      const duplicate = await base44.asServiceRole.entities.AuditEvent.filter({ actor_user_id: user.id, request_id: requestId, result: 'accepted' }, '-occurred_at', 1);
-      if (!duplicate.length) {
-        const definition = await base44.asServiceRole.entities.QuestDefinition.get(body.questDefinitionId);
-        if (definition.game_id !== character.game_id || definition.content_version !== character.content_version) return Response.json({ error: 'Quest content is not valid for this character.' }, { status: 422 });
-        if (!await evaluateCondition(base44, { character }, definition.availability_conditions)) return Response.json({ error: 'This character does not meet the quest requirements.' }, { status: 422 });
-        const existing = await base44.asServiceRole.entities.QuestInstance.filter({ character_id: character.id, definition_id: definition.id }, '-created_date', 20);
-        if (existing.some((instance) => instance.state !== 'ABANDONED') && definition.repeatability === 'never') return Response.json({ error: 'This quest cannot be accepted again.' }, { status: 409 });
-        const acceptedAt = new Date(), afterSeconds = Number(definition.expiration_rules?.afterSeconds || 0);
-        const instance = await base44.asServiceRole.entities.QuestInstance.create({ game_id: character.game_id, content_version: character.content_version, definition_id: definition.id, character_id: character.id, state: 'ACTIVE', accepted_at: acceptedAt.toISOString(), expires_at: afterSeconds > 0 ? new Date(acceptedAt.getTime() + afterSeconds * 1000).toISOString() : undefined, branch_state: {}, reward_state: 'pending', version: 1 });
-        const objectiveRows = createObjectiveRows(definition, instance, character);
-        if (objectiveRows.length) await base44.asServiceRole.entities.ObjectiveInstance.bulkCreate(objectiveRows);
-        await publishQuestEvent(base44, character, 'quest.accepted', 'quest', instance.id, requestId, { definition_id: definition.id });
-        await base44.asServiceRole.entities.AuditEvent.create({ game_id: character.game_id, actor_user_id: user.id, character_id: character.id, command, request_id: requestId, result: 'accepted', details: { quest_instance_id: instance.id, definition_id: definition.id }, occurred_at: new Date().toISOString() });
-        await publishQuestEvent(base44, character, 'character.location.entered', 'character', character.id, `${requestId}:initial-location`, { location_id: character.current_location_id, to: character.current_location_id });
-      }
-      return Response.json(await loadQuests(character.id));
-    }
-
-    if (command === 'ABANDON_QUEST') {
-      const character = await base44.entities.Character.get(body.characterId);
-      const instance = await base44.asServiceRole.entities.QuestInstance.get(body.questInstanceId);
-      if (instance.character_id !== character.id) return Response.json({ error: 'Quest ownership could not be verified.' }, { status: 403 });
-      if (instance.state !== 'ACTIVE' || instance.version !== body.questVersion) return Response.json({ error: 'Quest state changed. Refresh and try again.' }, { status: 409 });
-      await base44.asServiceRole.entities.QuestInstance.update(instance.id, { state: 'ABANDONED', reward_state: 'none', version: instance.version + 1 });
-      await base44.asServiceRole.entities.AuditEvent.create({ game_id: character.game_id, actor_user_id: user.id, character_id: character.id, command, request_id: requestId, result: 'accepted', details: { quest_instance_id: instance.id }, occurred_at: new Date().toISOString() });
-      return Response.json(await loadQuests(character.id));
-    }
-
-    if (command === 'EQUIP_ITEM' || command === 'UNEQUIP_ITEM' || command === 'USE_ITEM') {
-      const character = await base44.entities.Character.get(body.characterId);
-      const duplicate = await base44.asServiceRole.entities.AuditEvent.filter({ actor_user_id: user.id, request_id: requestId, result: 'accepted' }, '-occurred_at', 1);
-      if (!duplicate.length) {
-        const item = await base44.asServiceRole.entities.ItemInstance.get(body.itemId);
-        if (item.character_id !== character.id) return Response.json({ error: 'Item ownership could not be verified.' }, { status: 403 });
-        if (item.version !== body.itemVersion) return Response.json({ error: 'Item state changed. Refresh and try again.' }, { status: 409 });
-        const definition = await base44.asServiceRole.entities.ItemDefinition.get(item.definition_id);
-        if (!await evaluateCondition(base44, { character }, definition.requirements)) return Response.json({ error: 'This character does not meet the item requirements.' }, { status: 422 });
-        if (command === 'EQUIP_ITEM') {
-          const slot = body.slot;
-          if (!(definition.equipment_slots || []).includes(slot)) return Response.json({ error: 'That item cannot use the selected slot.' }, { status: 422 });
-          const equipped = await base44.asServiceRole.entities.ItemInstance.filter({ character_id: character.id, equipped_slot: slot }, '-updated_date', 20);
-          if (equipped.length) await base44.asServiceRole.entities.ItemInstance.bulkUpdate(equipped.map((current) => ({ id: current.id, equipped_slot: null, version: current.version + 1 })));
-          await base44.asServiceRole.entities.ItemInstance.update(item.id, { equipped_slot: slot, version: item.version + 1 });
-        }
-        if (command === 'UNEQUIP_ITEM') await base44.asServiceRole.entities.ItemInstance.update(item.id, { equipped_slot: null, version: item.version + 1 });
-        if (command === 'USE_ITEM') {
-          if (!(definition.actions || []).includes('use')) return Response.json({ error: 'This item is not usable.' }, { status: 422 });
-          const resolved = await resolveCharacterEffects(base44, character, definition.use_effects || []);
-          await base44.entities.Character.update(character.id, { ...resolved.patch, version: character.version + 1 });
-          if (item.quantity <= 1) await base44.asServiceRole.entities.ItemInstance.delete(item.id);
-          else await base44.asServiceRole.entities.ItemInstance.update(item.id, { quantity: item.quantity - 1, version: item.version + 1 });
-          await publishQuestEvent(base44, character, 'inventory.item.used', 'item', item.id, requestId, { item_definition_id: definition.id, quantity: 1 });
-        }
-        await base44.asServiceRole.entities.AuditEvent.create({ game_id: character.game_id, actor_user_id: user.id, character_id: character.id, command, request_id: requestId, result: 'accepted', details: { item_id: item.id, definition_id: definition.id, slot: body.slot || null }, occurred_at: new Date().toISOString() });
-      }
-      return Response.json(await loadInventory(character.id));
-    }
-
-    if (command === 'MOVE_TO_LOCATION') {
-      const duplicates = await base44.asServiceRole.entities.AuditEvent.filter({ actor_user_id: user.id, request_id: requestId, result: 'accepted' }, '-occurred_at', 1);
-      if (!duplicates.length) {
-        const character = await base44.entities.Character.get(body.characterId);
-        if (await isMovementLocked(base44, character)) return Response.json({ error: 'Characters cannot move while their combat is unresolved.' }, { status: 409 });
-        if (character.version !== body.characterVersion) return Response.json({ error: 'Character state changed. Refresh and try again.' }, { status: 409 });
-        const [forwardRoutes,reverseRoutes] = await Promise.all([base44.asServiceRole.entities.Connection.filter({ from_location_id: character.current_location_id, to_location_id: body.destinationId, content_version: character.content_version, enabled: true }),base44.asServiceRole.entities.Connection.filter({ from_location_id: body.destinationId, to_location_id: character.current_location_id, content_version: character.content_version, enabled: true, one_way: false })]);
-        const connection = forwardRoutes[0] || reverseRoutes[0];
-        if (!connection) return Response.json({ error: 'That route is not currently available.' }, { status: 422 });
-        const missingTags = (connection.required_tags || []).filter((tag) => !(character.tags || []).includes(tag));
-        if (missingTags.length || !await evaluateCondition(base44, { character }, connection.conditions)) return Response.json({ error: 'This character does not meet the route requirements.' }, { status: 422 });
-        const movedCharacters = await movePartyWithLeader(base44, character, body.destinationId);
-        for (const movedCharacter of movedCharacters) {
-          await publishQuestEvent(base44, movedCharacter, 'character.location.entered', 'character', movedCharacter.id, requestId, { from: movedCharacter.current_location_id, to: body.destinationId, location_id: body.destinationId });
-        }
-        await base44.asServiceRole.entities.AuditEvent.create({ game_id: character.game_id, actor_user_id: user.id, character_id: character.id, command, request_id: requestId, result: 'accepted', details: { from: character.current_location_id, to: body.destinationId, travel_time: connection.travel_time }, occurred_at: new Date().toISOString() });
-      }
-    }
-
-    const characters = await base44.entities.Character.list('-updated_date', 20);
-    const games = await base44.asServiceRole.entities.Game.filter({ status: 'published' }, 'title', 20);
-    const selected = characters.find((item) => item.id === body.characterId) || characters[0] || null;
-    if (!selected) return Response.json({ games, game: games[0] || null, characters, character: null, location: null, exits: [], npcs: [], activity: [] });
-    const game = games.find((item) => item.id === selected.game_id) || null;
-    const location = await base44.asServiceRole.entities.LocationDefinition.get(selected.current_location_id);
-    const [forwardLinks,reverseLinks] = await Promise.all([base44.asServiceRole.entities.Connection.filter({ from_location_id: selected.current_location_id, content_version: selected.content_version, enabled: true }, 'label', 30),base44.asServiceRole.entities.Connection.filter({ to_location_id: selected.current_location_id, content_version: selected.content_version, enabled: true, one_way: false }, 'label', 30)]);
-    const reverseOnly = reverseLinks.filter((link) => !forwardLinks.some((forward) => forward.to_location_id === link.from_location_id));
-    const links = [...forwardLinks,...reverseOnly.map((link) => ({...link,to_location_id:link.from_location_id,from_location_id:selected.current_location_id,reverse:true}))];
-    const destinations = await Promise.all(links.map((link) => base44.asServiceRole.entities.LocationDefinition.get(link.to_location_id)));
-    const exits = links.map((link, index) => ({ ...link, destination: destinations[index] }));
-    const [npcs, activity] = await Promise.all([loadVisibleNpcs(base44, selected), base44.asServiceRole.entities.AuditEvent.filter({ actor_user_id: user.id, character_id: selected.id, result: 'accepted' }, '-occurred_at', 8)]);
-    return Response.json({ games, game, characters, character: selected, location, exits, npcs, activity });
+    const handler=domainHandlers[contract.domain];
+    if(!handler)return Response.json({error:`No handler registered for ${contract.domain}.`},{status:500});
+    return await handler(base44,user,body,requestId);
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
