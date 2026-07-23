@@ -9,7 +9,7 @@ import { handleStudioAuthoringCommand } from '../../shared/studio.ts';
 import { handleCapabilityCommand } from '../../shared/capabilities.ts';
 import { handleSimulationCommand } from '../../shared/simulation.ts';
 import { handlePlatformCommand } from '../../shared/platform.ts';
-import { getCommandContract, publicCommandContracts, validateCommandPayload } from '../../shared/commandContracts.ts';
+import { getCommandContract, publicCommandContracts, validateCommandPayload, validateCommandResponse } from '../../shared/commandContracts.ts';
 import { handleRuntimeCommand } from '../../shared/runtime.ts';
 
 const domainHandlers:any={
@@ -42,7 +42,9 @@ Deno.serve(async (req) => {
     if (rateLimitResponse) return rateLimitResponse;
     const handler=domainHandlers[contract.domain];
     if(!handler)return Response.json({error:`No handler registered for ${contract.domain}.`},{status:500});
-    return await handler(base44,user,body,requestId);
+    const response=await handler(base44,user,body,requestId);
+    if(response.ok){const responseBody=await response.clone().json();const responseError=validateCommandResponse(command,responseBody);if(responseError)return Response.json({error:'Command response violated its contract.',details:responseError},{status:500});}
+    return response;
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
