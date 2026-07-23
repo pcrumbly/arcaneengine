@@ -1,5 +1,5 @@
 import { useEffect,useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeRuntimeCommand } from '@/lib/runtimeCommandClient';
 import CharacterSummary from '@/components/character/CharacterSummary';
 import CharacterValues from '@/components/character/CharacterValues';
 import CharacterEffects from '@/components/character/CharacterEffects';
@@ -10,7 +10,7 @@ import PageState from '@/components/runtime/PageState';
 
 export default function Character(){
   const [profile,setProfile]=useState(null),[empty,setEmpty]=useState(false),[error,setError]=useState('');
-  useEffect(()=>{base44.functions.invoke('runtimeCommand',{command:'GET_STATE'}).then(({data})=>{if(!data.character){setEmpty(true);return;}return base44.functions.invoke('runtimeCommand',{command:'GET_CHARACTER_PROFILE',characterId:data.character.id});}).then(response=>response&&setProfile(response.data)).catch(caught=>setError(caught.response?.data?.error||caught.message));},[]);
+  useEffect(()=>{invokeRuntimeCommand({command:'GET_STATE'}).then(({data})=>{if(!data.character){setEmpty(true);return;}return invokeRuntimeCommand({command:'GET_CHARACTER_PROFILE',characterId:data.character.id});}).then(response=>response&&setProfile(response.data)).catch(caught=>setError(caught.response?.data?.error||caught.message));},[]);
   if(error)return <PageState kind="error" title="Unable to load character" description={error}/>;
   if(empty)return <PageState kind="empty" title="No active character" description="Create a character from the Runtime page first."/>;
   if(!profile)return <PageState title="Loading character profile" description="Resolving attributes, equipment, progression, and active effects."/>;

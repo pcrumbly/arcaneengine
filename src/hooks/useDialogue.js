@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeRuntimeCommand } from '@/lib/runtimeCommandClient';
 
 export default function useDialogue(onResolved) {
   const [dialogue, setDialogue] = useState(null);
@@ -7,7 +7,7 @@ export default function useDialogue(onResolved) {
   const [error, setError] = useState('');
   const invoke = async (payload) => {
     setBusy(true); setError('');
-    try { const { data } = await base44.functions.invoke('runtimeCommand', payload); setDialogue(data.dialogue); if (payload.command === 'SELECT_DIALOGUE_OPTION') await onResolved(); }
+    try { const { data } = await invokeRuntimeCommand( payload); setDialogue(data.dialogue); if (payload.command === 'SELECT_DIALOGUE_OPTION') await onResolved(); }
     catch (caught) { setError(caught.response?.data?.error || caught.message); }
     finally { setBusy(false); }
   };

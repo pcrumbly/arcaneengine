@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { invokeRuntimeCommand } from '@/lib/runtimeCommandClient';
 import QuestTable from '@/components/quests/QuestTable';
 import QuestDialog from '@/components/quests/QuestDialog';
 import PageLayout from '@/components/runtime/PageLayout';
@@ -9,8 +9,8 @@ import PageState from '@/components/runtime/PageState';
 
 export default function Quests() {
   const [data, setData] = useState(null), [tab, setTab] = useState('active'), [query, setQuery] = useState(''), [selected, setSelected] = useState(null), [available, setAvailable] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('');
-  const invoke = async (payload) => { setBusy(true); setError(''); try { const response = await base44.functions.invoke('runtimeCommand', payload); setData(response.data); setSelected(null); } catch (caught) { setError(caught.response?.data?.error || caught.message); } finally { setBusy(false); } };
-  useEffect(() => { base44.functions.invoke('runtimeCommand', { command: 'GET_STATE' }).then(({data}) => data.character && invoke({ command: 'GET_QUESTS', characterId: data.character.id })); }, []);
+  const invoke = async (payload) => { setBusy(true); setError(''); try { const response = await invokeRuntimeCommand( payload); setData(response.data); setSelected(null); } catch (caught) { setError(caught.response?.data?.error || caught.message); } finally { setBusy(false); } };
+  useEffect(() => { invokeRuntimeCommand( { command: 'GET_STATE' }).then(({data}) => data.character && invoke({ command: 'GET_QUESTS', characterId: data.character.id })); }, []);
   const list = useMemo(() => { const source = tab === 'available' ? data?.available || [] : (data?.quests || []).filter((quest) => tab === 'all' || quest.state.toLowerCase() === tab); return source.filter((quest) => (quest.definition?.name || quest.name).toLowerCase().includes(query.toLowerCase())); }, [data, tab, query]);
   if (!data) return <PageState title="Loading quests" description="Resolving availability, objectives, branches, and rewards."/>;
   const choose = (quest) => { setSelected(quest); setAvailable(tab === 'available'); };

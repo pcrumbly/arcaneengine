@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeRuntimeCommand } from '@/lib/runtimeCommandClient';
 
 export default function useRuntime() {
   const [state, setState] = useState(null);
@@ -9,7 +9,7 @@ export default function useRuntime() {
     setBusy(true);
     setError('');
     try {
-      const response = await base44.functions.invoke('runtimeCommand', payload);
+      const response = await invokeRuntimeCommand(payload);
       setState(response.data);
       window.dispatchEvent(new CustomEvent('runtime-state-updated',{detail:response.data}));
       return response.data;

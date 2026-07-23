@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Download, LayoutGrid, List, Search } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { invokeRuntimeCommand } from '@/lib/runtimeCommandClient';
 import InventorySummary from '@/components/inventory/InventorySummary';
 import InventoryTable from '@/components/inventory/InventoryTable';
 import InventoryGrid from '@/components/inventory/InventoryGrid';
@@ -14,8 +14,8 @@ import PageState from '@/components/runtime/PageState';
 
 export default function Inventory() {
   const [data, setData] = useState(null), [query, setQuery] = useState(''), [category, setCategory] = useState('all'), [containerId, setContainerId] = useState('all'), [quality, setQuality] = useState('all'), [assignment, setAssignment] = useState('all'), [sort, setSort] = useState('name'), [view, setView] = useState('list'), [selected, setSelected] = useState(null), [busy, setBusy] = useState(false), [error, setError] = useState(''), [hasCharacter, setHasCharacter] = useState(true), [selectedIds, setSelectedIds] = useState([]);
-  const invoke = async (payload) => { setBusy(true); setError(''); try { const response = await base44.functions.invoke('runtimeCommand', payload); setData(response.data); setSelected((current) => current ? response.data.items.find((item) => item.id === current.id) || null : null); return true; } catch (caught) { setError(caught.response?.data?.error || caught.message); return false; } finally { setBusy(false); } };
-  useEffect(() => { base44.functions.invoke('runtimeCommand', { command: 'GET_STATE' }).then(({data:runtime}) => { setHasCharacter(!!runtime.character); if (runtime.character) invoke({ command: 'GET_INVENTORY', characterId: runtime.character.id }); }); }, []);
+  const invoke = async (payload) => { setBusy(true); setError(''); try { const response = await invokeRuntimeCommand( payload); setData(response.data); setSelected((current) => current ? response.data.items.find((item) => item.id === current.id) || null : null); return true; } catch (caught) { setError(caught.response?.data?.error || caught.message); return false; } finally { setBusy(false); } };
+  useEffect(() => { invokeRuntimeCommand( { command: 'GET_STATE' }).then(({data:runtime}) => { setHasCharacter(!!runtime.character); if (runtime.character) invoke({ command: 'GET_INVENTORY', characterId: runtime.character.id }); }); }, []);
   const categories = [...new Set((data?.items || []).map((item) => item.definition.category).filter(Boolean))];
   const qualities = [...new Set((data?.items || []).map((item) => item.quality).filter(Boolean))];
   const filtered = useMemo(() => (data?.items || []).filter((item) => (category === 'all' || item.definition.category === category) && (containerId === 'all' || item.container_id === containerId) && (quality === 'all' || item.quality === quality) && (assignment === 'all' || (assignment === 'equipped') === !!item.equipped_slot) && item.definition.name.toLowerCase().includes(query.toLowerCase())).sort((a,b) => sort === 'newest' ? new Date(b.acquired_at) - new Date(a.acquired_at) : sort === 'weight' ? (b.definition.weight || 0) * b.quantity - (a.definition.weight || 0) * a.quantity : a.definition.name.localeCompare(b.definition.name)), [data, query, category, containerId, quality, assignment, sort]);

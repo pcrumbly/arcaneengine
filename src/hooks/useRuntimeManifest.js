@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeRuntimeCommand } from '@/lib/runtimeCommandClient';
 import { resolveNavigation, resolveTheme } from '@/lib/runtimeManifest';
 
 export default function useRuntimeManifest() {
   const [state,setState] = useState(null);
   useEffect(() => {
-    const load = () => Promise.all([base44.functions.invoke('runtimeCommand',{command:'GET_STATE'}),base44.functions.invoke('runtimeCommand',{command:'GET_PRESENTATION'})]).then(([runtime,presentation]) => setState({...runtime.data,...presentation.data}));
+    const load = () => Promise.all([invokeRuntimeCommand({command:'GET_STATE'}),invokeRuntimeCommand({command:'GET_PRESENTATION'})]).then(([runtime,presentation]) => setState({...runtime.data,...presentation.data}));
     const update = event => setState(current=>({...event.detail,locale:current?.locale,locales:current?.locales,translations:current?.translations}));
     load();
     window.addEventListener('runtime-state-updated',update);

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeRuntimeCommand } from '@/lib/runtimeCommandClient';
 import CombatRoster from '@/components/combat/CombatRoster';
 import CombatActions from '@/components/combat/CombatActions';
 import CombatLog from '@/components/combat/CombatLog';
@@ -10,8 +10,8 @@ import PageState from '@/components/runtime/PageState';
 
 export default function Combat() {
   const [data,setData] = useState(null), [targetId,setTargetId] = useState(''), [busy,setBusy] = useState(false), [error,setError] = useState('');
-  const invoke = async (payload) => { setBusy(true); setError(''); try { const {data:next} = await base44.functions.invoke('runtimeCommand', payload); setData(next); const target = next.participants?.find((item) => item.team !== 'player' && item.status === 'active'); setTargetId(target?.id || ''); } catch (caught) { setError(caught.response?.data?.error || caught.message); } finally { setBusy(false); } };
-  useEffect(() => { base44.functions.invoke('runtimeCommand', { command:'GET_STATE' }).then(({data:state}) => state.character && invoke({ command:'GET_COMBAT', characterId:state.character.id })); }, []);
+  const invoke = async (payload) => { setBusy(true); setError(''); try { const {data:next} = await invokeRuntimeCommand( payload); setData(next); const target = next.participants?.find((item) => item.team !== 'player' && item.status === 'active'); setTargetId(target?.id || ''); } catch (caught) { setError(caught.response?.data?.error || caught.message); } finally { setBusy(false); } };
+  useEffect(() => { invokeRuntimeCommand( { command:'GET_STATE' }).then(({data:state}) => state.character && invoke({ command:'GET_COMBAT', characterId:state.character.id })); }, []);
   const actor = useMemo(() => data?.participants?.find((item) => item.id === data.combat?.active_participant_id), [data]);
   if (!data) return <PageState title="Loading combat state" description="Synchronizing participants, turn order, abilities, and combat events."/>;
   const start = (encounterDefinitionId) => invoke({ command:'START_ENCOUNTER', characterId:data.character.id, encounterDefinitionId, requestId:crypto.randomUUID() });
