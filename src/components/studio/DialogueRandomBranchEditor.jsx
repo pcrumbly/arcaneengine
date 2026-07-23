@@ -1,0 +1,7 @@
+import { Plus } from 'lucide-react';
+import DialogueRandomOutcomeEditor from '@/components/studio/DialogueRandomOutcomeEditor';
+
+export default function DialogueRandomBranchEditor({ value, nodeKeys, onChange }) {
+  const outcomes = value?.outcomes || [], update = (index, next) => onChange({ outcomes: outcomes.map((item, current) => current === index ? next : item) });
+  return <div className="mt-2 rounded border border-violet-400/20 bg-violet-400/5 p-3"><div className="mb-2 flex items-center justify-between"><div><p className="text-xs font-semibold uppercase tracking-wider text-violet-300">Weighted random branch</p><p className="text-xs text-slate-500">The server records the seeded roll and selected outcome.</p></div><button type="button" onClick={() => onChange(null)} className="text-xs text-slate-400">Remove</button></div><div className="space-y-2">{outcomes.map((outcome, index) => <DialogueRandomOutcomeEditor key={`${outcome.key}-${index}`} outcome={outcome} nodeKeys={nodeKeys} onChange={next => update(index, next)} onRemove={() => onChange({ outcomes: outcomes.filter((_, current) => current !== index) })}/>)}</div><button type="button" onClick={() => onChange({ outcomes: [...outcomes, { key: `outcome-${outcomes.length + 1}`, label: 'New outcome', weight: 1, next_node_key: '', effects: [], events: [] }] })} className="mt-2 flex items-center gap-1 text-xs text-violet-300"><Plus size={13}/>Add weighted outcome</button></div>;
+}

@@ -130,6 +130,52 @@
                     "attribute_id",
                     "difficulty"
                   ]
+                },
+                "random_branch": {
+                  "type": "object",
+                  "properties": {
+                    "outcomes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "weight": {
+                            "type": "number"
+                          },
+                          "next_node_key": {
+                            "type": "string"
+                          },
+                          "effects": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "additionalProperties": true
+                            }
+                          },
+                          "events": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "additionalProperties": true
+                            }
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "weight"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "outcomes"
+                  ]
                 }
               },
               "required": [
