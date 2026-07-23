@@ -9,7 +9,7 @@ export const engineModules=[
   {route:'/party',label:'Party',labelKey:'nav.party',module:'party',order:40},
   {route:'/combat',label:'Combat',labelKey:'nav.combat',module:'combat',order:50},
   {route:'/messages',label:'Messages',labelKey:'nav.messages',module:'messages',order:60},
-  {route:'/studio',label:'Game Studio',labelKey:'nav.studio',module:'studio',order:90},
+  {route:'/studio',label:'Admin Console',labelKey:'nav.studio',module:'studio',order:90},
   {route:'/settings',label:'Settings',labelKey:'nav.settings',module:'settings',order:100},
   {route:'/account',label:'Account',labelKey:'nav.account',module:'account',order:110}
 ];

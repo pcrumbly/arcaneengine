@@ -50,6 +50,7 @@ async function mutateTestCharacter(base44,user,character,body,requestId){
 }
 
 export async function handleSimulationCommand(base44,user,body,requestId){
+  if(user.role!=='admin')return Response.json({error:'Forbidden'},{status:403});
   if(body.command==='GET_SIMULATION'){const allowed=await authorizedGameIds(base44,user,'simulation:read');if(allowed&&allowed.length===0)return Response.json({error:'Forbidden'},{status:403});const scopedBody=allowed?{...body,gameId:allowed.includes(body.gameId)?body.gameId:allowed[0]}:body;return Response.json(await loadSimulation(base44,scopedBody));}
   if(body.command==='CREATE_TEST_CHARACTER'){const access=await requireGamePermission(base44,user,body.gameId,'simulation:write');if(access)return access;return await createTestCharacter(base44,user,body,requestId);}
   const characterAccessTarget=await base44.asServiceRole.entities.Character.get(body.characterId),access=await requireGamePermission(base44,user,characterAccessTarget.game_id,'simulation:write');if(access)return access;

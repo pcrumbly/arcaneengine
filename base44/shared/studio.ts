@@ -6,8 +6,8 @@ const gameFields = ['title','description','terminology','theme','enabled_modules
 const clean = (values:any) => Object.fromEntries(Object.entries(values || {}).filter(([key]) => !reserved.has(key)));
 async function draftRelease(base44:any, releaseId:string) { const release=await base44.asServiceRole.entities.ContentRelease.get(releaseId); if(release.status!=='draft')throw new Error('Published and retired releases are immutable.'); return release; }
 export async function handleStudioAuthoringCommand(base44:any,user:any,body:any){
+  if(user.role!=='admin')return Response.json({error:'Forbidden'},{status:403});
   if(body.command==='CREATE_GAME'){
-    if(user.role!=='admin')return Response.json({error:'Forbidden'},{status:403});
     const key=String(body.key||'').trim().toLowerCase().replace(/[^a-z0-9._-]/g,'-'),title=String(body.title||'').trim(),version=String(body.version||'1.0.0').trim();
     if(!key||!title||!version)return Response.json({error:'Title, key, and initial version are required.'},{status:422});
     if((await base44.asServiceRole.entities.Game.filter({key},'-created_date',1)).length)return Response.json({error:'That game key already exists.'},{status:409});

@@ -4,6 +4,7 @@ import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import AdminRoute from '@/components/AdminRoute';
 import AppShell from '@/components/runtime/AppShell';
 import Home from '@/pages/Home';
 import Studio from '@/pages/Studio';
@@ -72,7 +73,9 @@ const AuthenticatedApp = () => {
           <Route path="/skills" element={<Skills />} />
           <Route path="/party" element={<Party />} />
           <Route path="/combat" element={<Combat />} />
-          <Route path="/studio" element={<Studio />} />
+          <Route element={<AdminRoute />}>
+            <Route path="/studio" element={<Studio />} />
+          </Route>
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>
