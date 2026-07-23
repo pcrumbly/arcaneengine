@@ -5,6 +5,7 @@ import CharacterValues from '@/components/character/CharacterValues';
 import CharacterEffects from '@/components/character/CharacterEffects';
 import CharacterProgression from '@/components/character/CharacterProgression';
 import DerivedValues from '@/components/character/DerivedValues';
+import PageHeader from '@/components/runtime/PageHeader';
 
 export default function Character(){
   const [profile,setProfile]=useState(null),[empty,setEmpty]=useState(false),[error,setError]=useState('');
@@ -13,5 +14,5 @@ export default function Character(){
   if(empty)return <div className="p-6"><h2 className="text-2xl font-semibold">No active character</h2><p className="mt-2 text-sm text-slate-400">Create a character from the Runtime page first.</p></div>;
   if(!profile)return <div className="p-6 text-sm text-slate-400">Loading character profile…</div>;
   const visible=profile.attributeDefinitions.filter(item=>item.visibility!=='hidden');
-  return <div className="p-4 sm:p-6"><p className="text-xs uppercase tracking-[.22em] text-runtime-accent">Character / Profile</p><h2 className="mt-1 text-2xl font-semibold">Character sheet</h2><div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]"><div className="space-y-4"><CharacterSummary character={profile.character}/><CharacterValues title="Attributes" values={profile.character.attributes} definitions={visible}/><CharacterValues title="Resources" values={profile.character.resources} definitions={visible}/><DerivedValues values={profile.derivedValues}/><CharacterProgression skills={profile.skills} equipment={profile.equipment} currency={profile.character.currency}/></div><CharacterEffects effects={profile.effects}/></div></div>;
+  return <div className="p-4 sm:p-6"><PageHeader eyebrow="Character / Profile" title="Character sheet" description="Inspect attributes, resources, progression, equipment, and active effects."/><div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]"><div className="space-y-4"><CharacterSummary character={profile.character}/><CharacterValues title="Attributes" values={profile.character.attributes} definitions={visible}/><CharacterValues title="Resources" values={profile.character.resources} definitions={visible}/><DerivedValues values={profile.derivedValues}/><CharacterProgression skills={profile.skills} equipment={profile.equipment} currency={profile.character.currency}/></div><CharacterEffects effects={profile.effects}/></div></div>;
 }

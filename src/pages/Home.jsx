@@ -5,6 +5,7 @@ import CharacterSetup from '@/components/runtime/CharacterSetup';
 import LocationPanel from '@/components/runtime/LocationPanel';
 import ActivityFeed from '@/components/runtime/ActivityFeed';
 import DialogueDialog from '@/components/runtime/DialogueDialog';
+import PageHeader from '@/components/runtime/PageHeader';
 import useDialogue from '@/hooks/useDialogue';
 
 export default function Home() {
@@ -17,7 +18,7 @@ export default function Home() {
   const game = state.game || state.games.find((item) => item.id === state.character.game_id);
   return <div>
     <CharacterStrip character={state.character} location={state.location} characters={state.characters} game={game} onSelect={selectCharacter}/>
-    <div className="p-4 sm:p-6"><div className="mb-5"><p className="text-xs uppercase tracking-[.22em] text-slate-500">Player runtime / Exploration</p><h2 className="mt-1 text-2xl font-semibold">Location command center</h2></div>
+    <div className="p-4 sm:p-6"><PageHeader eyebrow="Player runtime / Exploration" title="Location command center" description="Review the current location, available routes, nearby contacts, and recent events."/>
       {error && <div role="alert" className="mb-4 flex items-center gap-2 rounded-md border border-red-400/20 bg-red-400/10 p-3 text-sm text-red-200"><AlertCircle size={16}/>{error}</div>}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]"><LocationPanel location={state.location} exits={state.exits} npcs={state.npcs || []} busy={busy || conversation.busy} onMove={move} onTalk={(placementId) => conversation.start(state.character.id, placementId)}/><ActivityFeed events={state.activity}/></div>
     </div>
