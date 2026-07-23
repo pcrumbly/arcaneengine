@@ -1,6 +1,8 @@
 import { base44 } from '@/api/base44Client';
 
 let contractsPromise;
+const inFlightReads = new Map();
+const readCommands = new Set(['GET_STATE','GET_INVENTORY','GET_QUESTS','GET_OPERATIONS','GET_NOTIFICATIONS','GET_COMBAT','GET_PARTY','GET_SETTINGS','GET_SKILLS','GET_WORLD','GET_JOURNAL','GET_PRESENTATION','GET_ACCOUNT','GET_RUNTIME_MODULE','GET_NPC_INTERACTION','STUDIO_OVERVIEW','GET_STUDIO_CONTENT','GET_SIMULATION']);
 
 const matchesType = (value, type) => type === 'array'
   ? Array.isArray(value)
@@ -27,5 +29,10 @@ export async function invokeRuntimeCommand(payload) {
     }
   }
   const request = payload?.requestId ? payload : { ...payload, requestId: crypto.randomUUID() };
-  return base44.functions.invoke('runtimeCommand', request);
+  if (!readCommands.has(payload?.command)) return base44.functions.invoke('runtimeCommand', request);
+  const readKey = JSON.stringify(payload);
+  if (inFlightReads.has(readKey)) return inFlightReads.get(readKey);
+  const pending = base44.functions.invoke('runtimeCommand', request).finally(() => inFlightReads.delete(readKey));
+  inFlightReads.set(readKey, pending);
+  return pending;
 }
