@@ -1,2 +1,2 @@
-const tabs=[['overview','Overview'],['content','Content authoring'],['configuration','Game configuration'],['operations','Operations']];
+const tabs=[['overview','Overview'],['content','Content authoring'],['configuration','Game configuration'],['simulation','Simulation'],['operations','Operations']];
 export default function StudioTabs({active,onChange}){return <div className="flex overflow-x-auto border-b border-white/10">{tabs.map(([key,label])=><button key={key} onClick={()=>onChange(key)} className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm ${active===key?'border-runtime-accent text-runtime-accent':'border-transparent text-slate-500'}`}>{label}</button>)}</div>}

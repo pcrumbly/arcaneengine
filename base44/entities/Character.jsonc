@@ -23,6 +23,10 @@
       ],
       "default": "active"
     },
+    "is_test_character": {
+      "type": "boolean",
+      "default": false
+    },
     "attributes": {
       "type": "object",
       "additionalProperties": {
