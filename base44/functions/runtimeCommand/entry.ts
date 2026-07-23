@@ -12,6 +12,7 @@ import { claimQuestReward, createObjectiveRows, publishQuestEvent, refreshQuestP
 import { handleInventoryCommand } from '../../shared/inventory.ts';
 import { handleSimulationCommand } from '../../shared/simulation.ts';
 import { handlePlatformCommand } from '../../shared/platform.ts';
+import { getCommandContract, publicCommandContracts, validateCommandPayload } from '../../shared/commandContracts.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -19,20 +20,24 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     const body = await req.json();
+    const contractError = validateCommandPayload(body);
+    if (contractError) return Response.json({ error:contractError }, { status:422 });
     const command = body.command;
+    const contract:any = getCommandContract(command);
     const requestId = body.requestId || crypto.randomUUID();
+    if (contract.domain === 'contracts') return Response.json(publicCommandContracts());
     const rateLimitResponse = await enforceCommandRate(base44, user, command);
     if (rateLimitResponse) return rateLimitResponse;
-    if (['GET_NOTIFICATIONS','MARK_NOTIFICATION_READ','GET_OPERATIONS'].includes(command)) return await handleOperationsCommand(base44, user, body);
-    if (['GET_PRESENTATION','GET_ACCOUNT','SAVE_ACCOUNT_LOCALE','GET_WORLD','GET_JOURNAL','GET_RUNTIME_MODULE'].includes(command)) return await handlePlatformCommand(base44, user, body);
-    if (['GET_NPC_INTERACTION','EXECUTE_NPC_ACTION','START_DIALOGUE','SELECT_DIALOGUE_OPTION'].includes(command)) return await handleDialogueCommand(base44, user, body, requestId);
-    if (['GET_PARTY','CREATE_PARTY','ADD_PARTY_MEMBER','REMOVE_PARTY_MEMBER','DISBAND_PARTY'].includes(command)) return await handlePartyCommand(base44, user, body, requestId);
-    if (['GET_COMBAT','START_ENCOUNTER','SELECT_COMBAT_ACTION','COMPLETE_COMBAT'].includes(command)) return await handleCombatCommand(base44, user, body, requestId);
-    if (['GET_SETTINGS','SAVE_SETTINGS','SAVE_KEY_BINDING','RESET_KEY_BINDINGS'].includes(command)) return await handleSettingsCommand(base44, user, body);
-    if (['CREATE_RELEASE','VALIDATE_RELEASE','PUBLISH_RELEASE','PREVIEW_MIGRATION','MIGRATE_CHARACTER'].includes(command)) return await handleContentCommand(base44, user, body);
-    if (['CREATE_GAME','SAVE_GAME_CONFIG','CREATE_CONTENT_PACK','GET_STUDIO_CONTENT','SAVE_STUDIO_CONTENT','DELETE_STUDIO_CONTENT'].includes(command)) return await handleStudioAuthoringCommand(base44, user, body);
-    if (['GET_CAPABILITIES','GET_CHARACTER_PROFILE','TRAIN_SKILL','SAVE_LOADOUT','ACTIVATE_LOADOUT','DELETE_LOADOUT'].includes(command)) return await handleCapabilityCommand(base44, user, body, requestId);
-    if (['GET_SIMULATION','CREATE_TEST_CHARACTER','SIM_MOVE_CHARACTER','SIM_GIVE_ITEM','SIM_APPLY_STATUS','SIM_SET_QUEST_STATE','SIM_START_ENCOUNTER','SIM_REPLAY_COMBAT'].includes(command)) return await handleSimulationCommand(base44, user, body, requestId);
+    if (contract.domain === 'operations') return await handleOperationsCommand(base44, user, body);
+    if (contract.domain === 'platform') return await handlePlatformCommand(base44, user, body);
+    if (contract.domain === 'dialogue') return await handleDialogueCommand(base44, user, body, requestId);
+    if (contract.domain === 'party') return await handlePartyCommand(base44, user, body, requestId);
+    if (contract.domain === 'combat') return await handleCombatCommand(base44, user, body, requestId);
+    if (contract.domain === 'settings') return await handleSettingsCommand(base44, user, body);
+    if (contract.domain === 'content') return await handleContentCommand(base44, user, body);
+    if (contract.domain === 'studio') return await handleStudioAuthoringCommand(base44, user, body);
+    if (contract.domain === 'capabilities') return await handleCapabilityCommand(base44, user, body, requestId);
+    if (contract.domain === 'simulation') return await handleSimulationCommand(base44, user, body, requestId);
     const loadInventory = async (characterId) => {
       const character = await base44.entities.Character.get(characterId);
       const [containers, items, inventoryEvents] = await Promise.all([
