@@ -5,6 +5,23 @@
     "game_id": {
       "type": "string"
     },
+    "content_version": {
+      "type": "string"
+    },
+    "owner_type": {
+      "type": "string",
+      "enum": [
+        "character",
+        "party",
+        "location",
+        "npc",
+        "account",
+        "system"
+      ]
+    },
+    "owner_id": {
+      "type": "string"
+    },
     "character_id": {
       "type": "string"
     },

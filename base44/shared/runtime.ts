@@ -2,14 +2,14 @@ import { evaluateCondition, resolveCharacterEffects } from './rules.ts';
 import { loadVisibleNpcs } from './dialogue.ts';
 import { isMovementLocked, movePartyWithLeader } from './party.ts';
 import { claimQuestReward, createObjectiveRows, publishQuestEvent, refreshQuestProgress, selectQuestBranch } from './quests.ts';
-import { handleInventoryCommand } from './inventory.ts';
+import { handleInventoryCommand, inventoryContainersFor } from './inventory.ts';
 import { authorizedGameIds } from './authorization.ts';
 
 async function loadInventory(base44:any,user:any,characterId:string){
   const character=await base44.entities.Character.get(characterId);
-  const [containers,items,inventoryEvents]=await Promise.all([
-    base44.asServiceRole.entities.Container.filter({character_id:character.id},'name',30),
-    base44.asServiceRole.entities.ItemInstance.filter({character_id:character.id},'-acquired_at',200),
+  const containers=await inventoryContainersFor(base44,character),containerIds=containers.map((container:any)=>container.id);
+  const [items,inventoryEvents]=await Promise.all([
+    containerIds.length?base44.asServiceRole.entities.ItemInstance.filter({container_id:{'$in':containerIds}},'-acquired_at',200):[],
     base44.asServiceRole.entities.AuditEvent.filter({actor_user_id:user.id,character_id:character.id,result:'accepted'},'-occurred_at',200)
   ]);
   const definitionIds=[...new Set(items.map((item:any)=>item.definition_id))];
@@ -62,8 +62,8 @@ export async function handleRuntimeCommand(base44:any,user:any,body:any,requestI
     if(!start)return Response.json({error:'This game has no starting location.'},{status:409});
     const definitions=await base44.asServiceRole.entities.AttributeDefinition.filter({game_id:game.id,content_version:release.version},'name',200),definedAttributes=Object.fromEntries(definitions.filter((item:any)=>item.category!=='resource').map((item:any)=>[item.key,item.default_value])),definedResources=Object.fromEntries(definitions.filter((item:any)=>item.category==='resource').map((item:any)=>[item.key,item.default_value])),defaults=game.character_defaults||{},rules=game.rules||{};
     const character=await base44.entities.Character.create({game_id:game.id,content_version:release.version,name:String(body.name||'').trim(),current_location_id:start.id,attributes:{...definedAttributes,...(defaults.attributes||{})},resources:{...definedResources,...(defaults.resources||{})},currency:defaults.currency||{},tags:defaults.tags||[],version:1});
-    const container=await base44.asServiceRole.entities.Container.create({game_id:game.id,character_id:character.id,name:'Carried items',container_type:'character',capacity:Number(rules.inventory_capacity||0),version:1}),starters=await base44.asServiceRole.entities.ItemDefinition.filter({game_id:game.id,content_version:release.version,tags:{'$in':['starter']}},'name',20);
-    if(starters.length)await base44.asServiceRole.entities.ItemInstance.bulkCreate(starters.map((definition:any)=>({game_id:game.id,content_version:release.version,definition_id:definition.id,container_id:container.id,character_id:character.id,quantity:definition.stack_limit>1?Math.min(definition.stack_limit,Number(rules.starter_stack_quantity||1)):1,quality:'standard',bound_state:'unbound',custom_properties:{},applied_modifications:[],acquired_at:new Date().toISOString(),version:1})));
+    const container=await base44.asServiceRole.entities.Container.create({game_id:game.id,content_version:release.version,owner_type:'character',owner_id:character.id,character_id:character.id,name:'Carried items',container_type:'character',capacity:Number(rules.inventory_capacity||0),version:1}),starters=await base44.asServiceRole.entities.ItemDefinition.filter({game_id:game.id,content_version:release.version,tags:{'$in':['starter']}},'name',20);
+    if(starters.length)await base44.asServiceRole.entities.ItemInstance.bulkCreate(starters.map((definition:any)=>({game_id:game.id,content_version:release.version,definition_id:definition.id,container_id:container.id,owner_type:'character',owner_id:character.id,character_id:character.id,quantity:definition.stack_limit>1?Math.min(definition.stack_limit,Number(rules.starter_stack_quantity||1)):1,quality:'standard',bound_state:'unbound',custom_properties:{},applied_modifications:[],acquired_at:new Date().toISOString(),version:1})));
   }
   if(command==='GET_INVENTORY')return Response.json(await loadInventory(base44,user,body.characterId));
   if(['SPLIT_ITEM','MERGE_ITEM','TRANSFER_ITEM','BULK_TRANSFER_ITEMS','COLLECT_LOOT'].includes(command)){const character=await base44.entities.Character.get(body.characterId),result=await handleInventoryCommand(base44,user,character,body,requestId);if(result)return result;return Response.json(await loadInventory(base44,user,character.id));}
