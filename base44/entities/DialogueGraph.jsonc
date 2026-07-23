@@ -77,6 +77,59 @@
                       "event_type"
                     ]
                   }
+                },
+                "skill_check": {
+                  "type": "object",
+                  "properties": {
+                    "attribute_id": {
+                      "type": "string"
+                    },
+                    "difficulty": {
+                      "type": "number"
+                    },
+                    "die_sides": {
+                      "type": "number",
+                      "default": 20
+                    },
+                    "success_node_key": {
+                      "type": "string"
+                    },
+                    "failure_node_key": {
+                      "type": "string"
+                    },
+                    "success_effects": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "failure_effects": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "success_events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "failure_events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  },
+                  "required": [
+                    "attribute_id",
+                    "difficulty"
+                  ]
                 }
               },
               "required": [

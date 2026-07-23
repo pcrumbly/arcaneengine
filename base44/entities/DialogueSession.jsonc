@@ -33,6 +33,13 @@
       "type": "object",
       "additionalProperties": true
     },
+    "seed": {
+      "type": "number"
+    },
+    "rng_cursor": {
+      "type": "number",
+      "default": 0
+    },
     "version": {
       "type": "number",
       "default": 1
