@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     if (['CREATE_RELEASE','VALIDATE_RELEASE','PUBLISH_RELEASE','PREVIEW_MIGRATION','MIGRATE_CHARACTER'].includes(command)) return await handleContentCommand(base44, user, body);
     if (['CREATE_GAME','SAVE_GAME_CONFIG','GET_STUDIO_CONTENT','SAVE_STUDIO_CONTENT','DELETE_STUDIO_CONTENT'].includes(command)) return await handleStudioAuthoringCommand(base44, user, body);
     if (['GET_CAPABILITIES','GET_CHARACTER_PROFILE','TRAIN_SKILL','SAVE_LOADOUT','ACTIVATE_LOADOUT','DELETE_LOADOUT'].includes(command)) return await handleCapabilityCommand(base44, user, body, requestId);
-    if (['GET_SIMULATION','CREATE_TEST_CHARACTER','SIM_MOVE_CHARACTER','SIM_GIVE_ITEM','SIM_APPLY_STATUS'].includes(command)) return await handleSimulationCommand(base44, user, body, requestId);
+    if (['GET_SIMULATION','CREATE_TEST_CHARACTER','SIM_MOVE_CHARACTER','SIM_GIVE_ITEM','SIM_APPLY_STATUS','SIM_SET_QUEST_STATE','SIM_START_ENCOUNTER','SIM_REPLAY_COMBAT'].includes(command)) return await handleSimulationCommand(base44, user, body, requestId);
     const loadInventory = async (characterId) => {
       const character = await base44.entities.Character.get(characterId);
       const [containers, items, inventoryEvents] = await Promise.all([
