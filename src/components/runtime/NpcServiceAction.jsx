@@ -1,0 +1,6 @@
+import { HandHeart, LockKeyhole } from 'lucide-react';
+const price=(service={})=>[...Object.entries(service.costs||{}).map(([key,value])=>`${value} ${key}`),...Object.entries(service.resource_costs||{}).map(([key,value])=>`${value} ${key}`)].join(' · ');
+export default function NpcServiceAction({action,busy,onSelect}){
+  const service=action.service||{},unavailable=service.can_use===false,detail=service.item?`${service.item.quantity} × ${service.item.name}`:service.skill?`${service.skill.name} · Rank ${service.skill.rank}/${service.skill.max_rank}`:action.description;
+  return <button disabled={busy||unavailable} onClick={()=>onSelect(action)} className="flex items-start gap-3 rounded-md border border-white/10 p-3 text-left hover:border-cyan-400/40 hover:bg-cyan-400/5 disabled:cursor-not-allowed disabled:opacity-50"><span className="mt-0.5 text-runtime-accent">{unavailable?<LockKeyhole size={16}/>:<HandHeart size={16}/>}</span><span className="min-w-0 flex-1"><strong className="block text-sm">{action.label}</strong>{detail&&<span className="block text-xs text-slate-500">{detail}</span>}{price(service)&&<span className="mt-1 block text-xs text-slate-400">Cost: {price(service)}</span>}{unavailable&&service.unavailable_reason&&<span className="mt-1 block text-xs text-red-300">{service.unavailable_reason}</span>}</span></button>;
+}

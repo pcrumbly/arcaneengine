@@ -1,5 +1,6 @@
 import { evaluateCondition, resolveCharacterEffects } from './rules.ts';
 import { publishQuestEvent } from './quests.ts';
+import { describeNpcService, executeNpcService } from './npcServices.ts';
 
 const legacyLabel=(value:string)=>value.replaceAll('_',' ').replace(/\b\w/g,(letter)=>letter.toUpperCase());
 function actionDefinitions(definition:any){
@@ -8,7 +9,7 @@ function actionDefinitions(definition:any){
   return [...new Map([...legacy,...structured].map((action:any)=>[action.key,action])).values()];
 }
 async function relationshipFor(base44:any,character:any,npcInstanceId:string){const rows=await base44.asServiceRole.entities.Relationship.filter({character_id:character.id,npc_instance_id:npcInstanceId},'-created_date',1);return rows[0]||null;}
-async function availableActions(base44:any,character:any,definition:any,relationship:any){const rows:any[]=[];for(const action of actionDefinitions(definition))if(await evaluateCondition(base44,{character,relationship},action.conditions))rows.push({key:action.key,label:action.label,type:action.type,description:action.description||'',dialogue_graph_id:action.dialogue_graph_id||null});return rows;}
+async function availableActions(base44:any,character:any,definition:any,relationship:any){const rows:any[]=[];for(const action of actionDefinitions(definition))if(await evaluateCondition(base44,{character,relationship},action.conditions))rows.push({key:action.key,label:action.label,type:action.type,description:action.description||'',dialogue_graph_id:action.dialogue_graph_id||null,service:action.type==='service'?await describeNpcService(base44,character,action.service):null});return rows;}
 async function loadNpcContext(base44:any,character:any,placementId:string){
   const placement=await base44.asServiceRole.entities.NPCPlacement.get(placementId);
   if(placement.location_id!==character.current_location_id||placement.game_id!==character.game_id||placement.content_version!==character.content_version||!placement.enabled)throw new Error('This NPC is not available at the current location.');
@@ -26,7 +27,7 @@ export async function handleDialogueCommand(base44:any,user:any,body:any,request
   if(body.command==='EXECUTE_NPC_ACTION'){
     let character=await base44.entities.Character.get(body.characterId);if(character.version!==body.characterVersion)return Response.json({error:'Character state changed. Refresh and try again.'},{status:409});const context=await loadNpcContext(base44,character,body.placementId),action=actionDefinitions(context.definition).find((item:any)=>item.key===body.actionKey);
     if(!action||!context.actions.some((item:any)=>item.key===action.key)||action.type!=='service')return Response.json({error:'That NPC action is not available.'},{status:422});const duplicate=await base44.asServiceRole.entities.AuditEvent.filter({actor_user_id:user.id,request_id:requestId,result:'accepted'},'-occurred_at',1);
-    if(!duplicate.length){const effects=action.effects||[],characterEffects=effects.filter((item:any)=>item.type!=='relationshipChange');if(characterEffects.length){const resolved=await resolveCharacterEffects(base44,character,characterEffects);character=await base44.entities.Character.update(character.id,{...resolved.patch,version:character.version+1});}await updateRelationship(base44,character,context.instance.id,effects);await publishQuestEvent(base44,character,'npc.interaction.completed','npc',context.instance.id,requestId,{npc_definition_id:context.definition.id,npc_instance_id:context.instance.id,action_key:action.key});await base44.asServiceRole.entities.AuditEvent.create({game_id:character.game_id,actor_user_id:user.id,character_id:character.id,command:body.command,request_id:requestId,result:'accepted',details:{npc_instance_id:context.instance.id,action_key:action.key},occurred_at:new Date().toISOString()});}
+    if(!duplicate.length){const effects=action.effects||[],result=await executeNpcService(base44,character,action);if(result.error)return Response.json({error:result.error},{status:422});character=result.character;await updateRelationship(base44,character,context.instance.id,effects);await publishQuestEvent(base44,character,'npc.interaction.completed','npc',context.instance.id,requestId,{npc_definition_id:context.definition.id,npc_instance_id:context.instance.id,action_key:action.key,service_kind:action.service?.kind||'custom'});await base44.asServiceRole.entities.AuditEvent.create({game_id:character.game_id,actor_user_id:user.id,character_id:character.id,command:body.command,request_id:requestId,result:'accepted',details:{npc_instance_id:context.instance.id,action_key:action.key,service_kind:action.service?.kind||'custom',outcomes:result.outcomes},occurred_at:new Date().toISOString()});}
     const refreshed=await loadNpcContext(base44,character,body.placementId);return Response.json({interaction:interactionPayload(refreshed,character)});
   }
   if(body.command==='START_DIALOGUE'){

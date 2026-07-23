@@ -70,6 +70,43 @@
               "type": "object",
               "additionalProperties": true
             }
+          },
+          "service": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "custom",
+                  "healing",
+                  "shop",
+                  "training"
+                ]
+              },
+              "costs": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number"
+                }
+              },
+              "resource_costs": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number"
+                }
+              },
+              "item_definition_id": {
+                "type": "string"
+              },
+              "quantity": {
+                "type": "number",
+                "minimum": 1,
+                "default": 1
+              },
+              "skill_definition_id": {
+                "type": "string"
+              }
+            }
           }
         },
         "required": [
