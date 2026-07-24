@@ -40,6 +40,13 @@
       "type": "string",
       "format": "date-time"
     },
+    "lease_expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "lock_token": {
+      "type": "string"
+    },
     "published_at": {
       "type": "string",
       "format": "date-time"

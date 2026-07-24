@@ -1,20 +1,21 @@
 import { evaluateCondition, resolveCharacterEffects } from './rules.ts';
-import { legacyHash31 } from './deterministic.ts';
+import { deriveSeed, randomFloatAt } from './deterministic.ts';
 import { characterEventInput, publishDomainEvent } from './eventBus.ts';
+import { entityRef } from './simulationContracts.ts';
 
 const phaseOf=(date:Date)=>{const hour=date.getUTCHours();return hour<6?'night':hour<12?'morning':hour<18?'afternoon':hour<21?'evening':'night';};
 const payloadMatches=(expected:any={},actual:any={})=>Object.entries(expected).every(([key,value])=>actual?.[key]===value);
 
 async function environmentFor(base44:any,character:any){
   const stateQuery=character.world_instance_id?{world_instance_id:character.world_instance_id}:{game_id:character.game_id,content_version:character.content_version};const [states,location]=await Promise.all([base44.asServiceRole.entities.WorldState.filter(stateQuery,'-updated_date',1),base44.asServiceRole.entities.LocationDefinition.get(character.current_location_id)]),state=states[0],region=String(location?.region_key||'default'),weatherKey=state?.weather_by_region?.[region],weather=weatherKey?(await base44.asServiceRole.entities.WeatherDefinition.filter({game_id:character.game_id,content_version:character.content_version,region_key:region,key:weatherKey},'-created_date',1))[0]:null,time=new Date(state?.current_time||new Date().toISOString());
-  return {world:{current_time:time.toISOString(),phase:phaseOf(time),version:state?.version},weather,location};
+  const instance=state?.world_instance_id?await base44.asServiceRole.entities.WorldInstance.get(state.world_instance_id):null;return {world:{current_time:time.toISOString(),phase:phaseOf(time),version:state?.version,world_instance_id:state?.world_instance_id,seed:instance?.seed||0},weather,location};
 }
 
 function timeOccurrences(definition:any,context:any){
   const trigger=definition.trigger||{},before=new Date(context.before).getTime(),after=new Date(context.after).getTime();
   if(trigger.type==='at_time'){const due=new Date(trigger.at_time).getTime();return Number.isFinite(due)&&before<due&&due<=after?[`at:${new Date(due).toISOString()}`]:[];}
   if(!['interval','random_check'].includes(trigger.type))return [];
-  const interval=Math.max(1,Number(trigger.interval_minutes||60))*60000,anchor=new Date(trigger.starts_at||0).getTime(),first=Math.floor((before-anchor)/interval)+1,last=Math.floor((after-anchor)/interval),keys=[];for(let slot=first;slot<=last&&keys.length<100;slot++)if(slot>=0&&(trigger.type!=='random_check'||(legacyHash31(`${definition.id}:${context.character.id}:${slot}`)%100000)/100000<=Number(trigger.probability||0)))keys.push(`${trigger.type}:${slot}`);return keys;
+  const interval=Math.max(1,Number(trigger.interval_minutes||60))*60000,anchor=new Date(trigger.starts_at||0).getTime(),first=Math.floor((before-anchor)/interval)+1,last=Math.floor((after-anchor)/interval),keys=[];for(let slot=first;slot<=last&&keys.length<100;slot++)if(slot>=0&&(trigger.type!=='random_check'||randomFloatAt(deriveSeed(context.world?.seed||0,`${definition.id}:${context.character.id}`),slot)<=Number(trigger.probability||0)))keys.push(`${trigger.type}:${slot}`);return keys;
 }
 
 function signalOccurrences(definition:any,context:any){
@@ -26,7 +27,7 @@ function signalOccurrences(definition:any,context:any){
 
 async function execute(base44:any,character:any,definition:any,occurrenceKey:string,context:any){
   const existing=await base44.asServiceRole.entities.WorldEventExecution.filter({definition_id:definition.id,character_id:character.id,occurrence_key:occurrenceKey},'-created_date',1);if(existing.length)return [];
-  const execution=await base44.asServiceRole.entities.WorldEventExecution.create({game_id:character.game_id,content_version:character.content_version,definition_id:definition.id,character_id:character.id,occurrence_key:occurrenceKey,trigger_type:definition.trigger.type,status:'processing',world_time:context.world?.current_time,source_event_id:context.event?.id,version:1,triggered_at:new Date().toISOString()});
+  const execution=await base44.asServiceRole.entities.WorldEventExecution.create({game_id:character.game_id,world_instance_id:character.world_instance_id||context.world?.world_instance_id,content_version:character.content_version,definition_id:definition.id,definition_ref:entityRef('WorldEventDefinition',definition.id,definition.content_version),character_id:character.id,occurrence_key:occurrenceKey,trigger_type:definition.trigger.type,status:'processing',world_time:context.world?.current_time,source_event_id:context.event?.id,version:1,triggered_at:new Date().toISOString()});
   try{
     let fresh=await base44.asServiceRole.entities.Character.get(character.id);if(!await evaluateCondition(base44,{character:fresh,event:context.event,world:context.world,weather:context.weather,location:context.location},definition.conditions||{})){await base44.asServiceRole.entities.WorldEventExecution.update(execution.id,{status:'skipped',version:2});return [];}
     const resolved=await resolveCharacterEffects(base44,fresh,(definition.effects||[]).map((effect:any)=>({...effect,sourceType:effect.sourceType||'world_event',sourceId:effect.sourceId||definition.id})));if((definition.effects||[]).length)fresh=await base44.asServiceRole.entities.Character.update(fresh.id,{...resolved.patch,version:Number(fresh.version||1)+1});

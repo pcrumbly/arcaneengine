@@ -5,11 +5,18 @@
     "game_id": {
       "type": "string"
     },
+    "world_instance_id": {
+      "type": "string"
+    },
     "content_version": {
       "type": "string"
     },
     "definition_id": {
       "type": "string"
+    },
+    "definition_ref": {
+      "type": "object",
+      "additionalProperties": true
     },
     "character_id": {
       "type": "string"
