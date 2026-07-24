@@ -8,6 +8,9 @@
     "content_version": {
       "type": "string"
     },
+    "key": {
+      "type": "string"
+    },
     "npc_instance_id": {
       "type": "string"
     },
@@ -34,6 +37,7 @@
   "required": [
     "game_id",
     "content_version",
+    "key",
     "npc_instance_id",
     "location_id",
     "enabled"

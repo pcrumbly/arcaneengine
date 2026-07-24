@@ -1,5 +1,5 @@
 import { useEffect,useState } from 'react';
-const reserved=new Set(['id','created_date','updated_date','created_by_id','game_id','content_version','is_sample','revision']);
+const reserved=new Set(['id','created_date','updated_date','created_by_id','game_id','content_version','is_sample','revision','content_ref']);
 const editable=item=>Object.fromEntries(Object.entries(item||{}).filter(([key])=>!reserved.has(key)));
 export default function ContentJsonEditor({item,busy,onSave,onDelete,onCancel,onChangeValues}){
   const [value,setValue]=useState(''),[error,setError]=useState('');

@@ -19,6 +19,7 @@
       "enum": [
         "draft",
         "editing",
+        "indexing",
         "validating",
         "publishing",
         "published",
@@ -32,6 +33,10 @@
       "default": 1
     },
     "validation_revision": {
+      "type": "number",
+      "minimum": 1
+    },
+    "dependency_index_revision": {
       "type": "number",
       "minimum": 1
     },

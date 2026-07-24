@@ -1,0 +1,105 @@
+{
+  "name": "ContentDependency",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "release_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "index_revision": {
+      "type": "number",
+      "minimum": 1
+    },
+    "source_type": {
+      "type": "string"
+    },
+    "source_key": {
+      "type": "string"
+    },
+    "source_record_id": {
+      "type": "string"
+    },
+    "source_uri": {
+      "type": "string"
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "target_type": {
+      "type": "string"
+    },
+    "target_key": {
+      "type": "string"
+    },
+    "target_record_id": {
+      "type": "string"
+    },
+    "target_uri": {
+      "type": "string"
+    },
+    "target_ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "field_path": {
+      "type": "string"
+    },
+    "storage": {
+      "type": "string",
+      "enum": [
+        "id",
+        "key"
+      ]
+    },
+    "resolved": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "game_id",
+    "release_id",
+    "content_version",
+    "index_revision",
+    "source_type",
+    "source_key",
+    "source_record_id",
+    "source_uri",
+    "source_ref",
+    "target_type",
+    "target_key",
+    "target_uri",
+    "target_ref",
+    "field_path",
+    "storage",
+    "resolved"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

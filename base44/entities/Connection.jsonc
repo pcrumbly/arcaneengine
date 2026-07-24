@@ -8,6 +8,9 @@
     "content_version": {
       "type": "string"
     },
+    "key": {
+      "type": "string"
+    },
     "from_location_id": {
       "type": "string"
     },
@@ -47,6 +50,7 @@
   "required": [
     "game_id",
     "content_version",
+    "key",
     "from_location_id",
     "to_location_id",
     "label"
