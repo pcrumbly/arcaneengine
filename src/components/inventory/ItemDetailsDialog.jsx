@@ -6,11 +6,12 @@ import ItemCapabilities from '@/components/inventory/ItemCapabilities';
 import ItemRequirements from '@/components/inventory/ItemRequirements';
 import ItemHistory from '@/components/inventory/ItemHistory';
 import ItemProperties from '@/components/inventory/ItemProperties';
+import ContextualActions from '@/components/runtime/ContextualActions';
 
-export default function ItemDetailsDialog({ item, items, containers, busy, onClose, onAction }) {
+export default function ItemDetailsDialog({ item, items, containers, character, busy, onClose, onAction, onContextualExecuted }) {
   if (!item) return null;
   const definition = item.definition, requirementsMet = item.requirements_met !== false && item.container?.owner_type !== 'party';
-  return <Dialog open onOpenChange={(open) => !open && onClose()}><DialogContent className="border-white/10 bg-[#0a1728] text-slate-100 sm:max-w-lg"><DialogHeader><DialogTitle>{definition.name}</DialogTitle><DialogDescription className="text-slate-400">{definition.description}</DialogDescription></DialogHeader>
+  return <Dialog open onOpenChange={(open) => !open && onClose()}><DialogContent className="max-h-[90vh] overflow-y-auto border-white/10 bg-[#0a1728] text-slate-100 sm:max-w-lg"><DialogHeader><DialogTitle>{definition.name}</DialogTitle><DialogDescription className="text-slate-400">{definition.description}</DialogDescription></DialogHeader>
     <dl className="grid grid-cols-2 gap-3 rounded-md border border-white/10 p-3 text-sm"><Stat label="Category" value={definition.category}/><Stat label="Quantity" value={item.quantity}/><Stat label="Weight" value={definition.weight || 0}/><Stat label="Value" value={definition.value || 0}/><Stat label="Quality" value={item.quality}/><Stat label="Container" value={item.container?.name || 'Unknown'}/></dl>
     <ItemProperties item={item}/>
     <ItemComparison item={item} items={items}/>
@@ -19,6 +20,7 @@ export default function ItemDetailsDialog({ item, items, containers, busy, onClo
     <ItemCapabilities item={item}/>
     <InventoryStackActions item={item} items={items} containers={containers} busy={busy} onAction={onAction}/>
     <ItemHistory events={item.history}/>
+    <ContextualActions character={character} targetType="item" targetId={item.id} onExecuted={onContextualExecuted}/>
     <div className="flex flex-wrap justify-end gap-2">{item.equipped_slot && <Action busy={busy} onClick={() => onAction('UNEQUIP_ITEM')}>Unequip</Action>}{!item.equipped_slot && definition.equipment_slots?.map((slot) => <Action key={slot} busy={busy} blocked={!requirementsMet} onClick={() => onAction('EQUIP_ITEM', {slot})}>Equip: {slot}</Action>)}{definition.actions?.includes('use') && <Action primary busy={busy} blocked={!requirementsMet} onClick={() => onAction('USE_ITEM')}>Use item</Action>}</div>
   </DialogContent></Dialog>;
 }
