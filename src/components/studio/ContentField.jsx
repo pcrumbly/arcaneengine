@@ -11,8 +11,9 @@ import WorldEventEmissionsEditor from '@/components/studio/WorldEventEmissionsEd
 import InteractionTargetingEditor from '@/components/studio/InteractionTargetingEditor';
 import InteractionSourceEditor from '@/components/studio/InteractionSourceEditor';
 import InteractionSkillCheckEditor from '@/components/studio/InteractionSkillCheckEditor';
+import JsonValueField from '@/components/studio/JsonValueField';
 export default function ContentField({field,value,onChange,references={},allValues={}}){
-  const common={required:field.required,value:value??'',onChange:e=>onChange(e.target.value),className:'mt-2 w-full rounded-lg border border-slate-700 bg-[#111d31] px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:border-cyan-400'};
+  const common={required:field.required,value:value??'',onChange:e=>onChange(field.type==='number'?(e.target.value===''?'':Number(e.target.value)):e.target.value),className:'mt-2 w-full rounded-lg border border-slate-700 bg-[#111d31] px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:border-cyan-400'};
   if(field.type==='questGraph')return <QuestGraphEditor value={value} onChange={onChange}/>;
   if(field.type==='dialogueGraph')return <SynchronizedJsonEditor label="Dialogue nodes" value={value||[]} emptyValue={[]} onChange={onChange}><DialogueGraphEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
   if(field.type==='dialogueStart')return <label className="block text-sm text-slate-300">{field.label}<select {...common}><option value="">Select starting node…</option>{(allValues.nodes||[]).map(node=><option key={node.key} value={node.key}>{node.text?.slice(0,60)||node.key} · {node.key}</option>)}</select></label>;
@@ -27,7 +28,9 @@ export default function ContentField({field,value,onChange,references={},allValu
   if(field.type==='interactionSource')return <SynchronizedJsonEditor label={field.label} value={value||{}} emptyValue={{}} onChange={onChange}><InteractionSourceEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
   if(field.type==='interactionSkillCheck')return <SynchronizedJsonEditor label={field.label} value={value||{}} emptyValue={{}} onChange={onChange}><InteractionSkillCheckEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
   if(field.type==='checkbox')return <label className="flex items-center gap-2 text-sm text-slate-300"><input type="checkbox" checked={!!value} onChange={e=>onChange(e.target.checked)}/>{field.label}</label>;
-  if(field.type==='textarea'||field.type==='json')return <label className="block text-sm text-slate-300">{field.label}<textarea {...common} rows={field.type==='json'?6:3} className={`${common.className} font-mono`}/>{field.type==='json'&&<small className="text-slate-600">Advanced JSON</small>}</label>;
+  if(field.type==='json')return <JsonValueField label={field.label} value={value} emptyValue={JSON.parse(field.empty||'{}')} onChange={onChange}/>;
+  if(field.type==='textarea')return <label className="block text-sm text-slate-300">{field.label}<textarea {...common} rows={3}/></label>;
   if(field.type==='select')return <label className="block text-sm text-slate-300">{field.label}<select {...common}><option value="">Select…</option>{field.options.map(option=><option key={option}>{option}</option>)}</select></label>;
-  return <label className="block text-sm font-medium text-slate-300">{field.label}{field.required&&<span className="ml-1 text-cyan-400">*</span>}<input {...common} type={field.type==='number'?'number':'text'}/>{field.type==='tags'&&<small className="mt-1 block text-slate-600">Comma-separated values</small>}</label>;
+  if(field.type==='tags')return <label className="block text-sm font-medium text-slate-300">{field.label}<input {...common} value={(Array.isArray(value)?value:[]).join(', ')} onChange={event=>onChange(event.target.value.split(',').map(entry=>entry.trim()).filter(Boolean))}/><small className="mt-1 block text-slate-600">Comma-separated values</small></label>;
+  return <label className="block text-sm font-medium text-slate-300">{field.label}{field.required&&<span className="ml-1 text-cyan-400">*</span>}<input {...common} type={field.type==='number'?'number':'text'}/></label>;
 }
