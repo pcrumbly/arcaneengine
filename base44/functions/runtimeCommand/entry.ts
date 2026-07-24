@@ -14,6 +14,7 @@ import { getCommandContract, publicCommandContracts, validateCommandPayload, val
 import { handleRuntimeCommand } from '../../shared/runtime.ts';
 import { beginCommand, completeCommand, failCommand } from '../../shared/idempotency.ts';
 import { recordCommandFailure } from '../../shared/reliability.ts';
+import { drainOutbox } from '../../shared/eventBus.ts';
 
 const domainHandlers:any={
   operations:(base44:any,user:any,body:any)=>handleOperationsCommand(base44,user,body),
@@ -45,6 +46,7 @@ Deno.serve(async (req) => {
     if (contract.domain === 'contracts') return Response.json(publicCommandContracts());
     executionContext=await beginCommand(base44,user,body,requestId);
     if(executionContext.replay)return executionContext.replay;
+    await drainOutbox(base44,10);
     const rateLimitResponse = await enforceCommandRate(base44, user, command);
     if(rateLimitResponse){await completeCommand(base44,executionContext,rateLimitResponse);return rateLimitResponse;}
     const handler=domainHandlers[contract.domain];
@@ -53,6 +55,7 @@ Deno.serve(async (req) => {
     if(response.ok){const responseBody=await response.clone().json();const responseError=validateCommandResponse(command,responseBody);if(responseError){const invalid=Response.json({error:'Command response violated its contract.',details:responseError},{status:500});if(executionContext?.execution)await completeCommand(base44,executionContext,invalid);else await recordCommandFailure(base44,user.id,command,requestId,responseError,{status_code:500});return invalid;}}
     if(response.status>=500&&!executionContext?.execution)await recordCommandFailure(base44,user.id,command,requestId,(await response.clone().json()).error,{status_code:response.status});
     await completeCommand(base44,executionContext,response);
+    await drainOutbox(base44,10);
     return response;
   } catch (error) {
     if(base44&&executionContext?.execution)await failCommand(base44,executionContext,error);else if(base44&&currentUser&&currentCommand)await recordCommandFailure(base44,currentUser.id,currentCommand,currentRequestId,error);

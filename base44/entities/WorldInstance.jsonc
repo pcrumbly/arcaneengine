@@ -1,27 +1,51 @@
 {
-  "name": "WorldState",
+  "name": "WorldInstance",
   "type": "object",
   "properties": {
     "game_id": {
       "type": "string"
     },
-    "world_instance_id": {
-      "type": "string"
-    },
     "content_version": {
       "type": "string"
+    },
+    "key": {
+      "type": "string"
+    },
+    "definition_ref": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "id"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "archived"
+      ],
+      "default": "active"
     },
     "current_time": {
       "type": "string",
       "format": "date-time"
     },
-    "weather_by_region": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "string"
-      }
+    "seed": {
+      "type": "number"
     },
-    "weather_slot": {
+    "rng_cursor": {
       "type": "number",
       "default": 0
     },
@@ -33,8 +57,12 @@
   "required": [
     "game_id",
     "content_version",
+    "key",
+    "definition_ref",
+    "status",
     "current_time",
-    "weather_by_region",
+    "seed",
+    "rng_cursor",
     "version"
   ],
   "rls": {

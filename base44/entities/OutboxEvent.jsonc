@@ -1,0 +1,88 @@
+{
+  "name": "OutboxEvent",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string"
+    },
+    "dedupe_key": {
+      "type": "string"
+    },
+    "game_id": {
+      "type": "string"
+    },
+    "world_instance_id": {
+      "type": "string"
+    },
+    "aggregate_ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "envelope": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "publishing",
+        "published",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "attempts": {
+      "type": "number",
+      "default": 0
+    },
+    "available_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_error": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "event_id",
+    "dedupe_key",
+    "game_id",
+    "aggregate_ref",
+    "envelope",
+    "status",
+    "attempts",
+    "available_at",
+    "version"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

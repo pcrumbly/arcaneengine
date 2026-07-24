@@ -5,6 +5,9 @@
     "game_id": {
       "type": "string"
     },
+    "world_instance_id": {
+      "type": "string"
+    },
     "content_version": {
       "type": "string"
     },

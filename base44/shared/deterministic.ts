@@ -1,0 +1,7 @@
+export function seedFromString(value:string){let hash=2166136261;for(let index=0;index<String(value).length;index++){hash^=String(value).charCodeAt(index);hash=Math.imul(hash,16777619);}return hash>>>0;}
+export function legacyHash31(value:string){return [...String(value)].reduce((total,char)=>((total*31)+char.charCodeAt(0))>>>0,0);}
+export function randomFloatAt(seed:number,cursor:number){let x=((seed>>>0)+Math.imul(Number(cursor)+1,0x6D2B79F5))>>>0;x=Math.imul(x^x>>>15,x|1);x^=x+Math.imul(x^x>>>7,x|61);return ((x^x>>>14)>>>0)/4294967296;}
+export function rollAt(seed:number,cursor:number,sides:number){let state=(seed>>>0)||2654435769;for(let index=0;index<=cursor;index++){state^=state<<13;state^=state>>>17;state^=state<<5;}return 1+(state>>>0)%Math.max(1,Math.floor(sides));}
+export function deriveSeed(rootSeed:number|string,scope:string){return seedFromString(`${typeof rootSeed==='number'?rootSeed>>>0:rootSeed}:${scope}`);}
+export function deterministicId(...parts:any[]){return parts.map(part=>seedFromString(typeof part==='string'?part:JSON.stringify(part)).toString(16).padStart(8,'0')).join('').slice(0,32);}
+export function nextRandom(state:{seed:number,rng_cursor?:number}){const cursor=Number(state.rng_cursor||0),value=randomFloatAt(state.seed,cursor);return {value,cursor:cursor+1};}

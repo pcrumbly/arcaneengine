@@ -1,0 +1,103 @@
+{
+  "name": "EntityVariable",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "world_instance_id": {
+      "type": "string"
+    },
+    "owner_ref": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": [
+            "string",
+            "number"
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "id"
+      ]
+    },
+    "namespace": {
+      "type": "string",
+      "default": "default"
+    },
+    "key": {
+      "type": "string"
+    },
+    "value_type": {
+      "type": "string",
+      "enum": [
+        "string",
+        "number",
+        "boolean",
+        "object",
+        "array",
+        "null"
+      ]
+    },
+    "value": {
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "object",
+        "array",
+        "null"
+      ]
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "owner_ref",
+    "namespace",
+    "key",
+    "value_type",
+    "version"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

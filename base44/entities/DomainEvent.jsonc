@@ -2,13 +2,26 @@
   "name": "DomainEvent",
   "type": "object",
   "properties": {
+    "event_id": {
+      "type": "string"
+    },
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "event_type": {
+      "type": "string"
+    },
     "game_id": {
+      "type": "string"
+    },
+    "world_instance_id": {
       "type": "string"
     },
     "character_id": {
       "type": "string"
     },
-    "event_type": {
+    "content_version": {
       "type": "string"
     },
     "aggregate_type": {
@@ -17,28 +30,64 @@
     "aggregate_id": {
       "type": "string"
     },
+    "aggregate_ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "subject_ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "actor_ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
     "request_id": {
       "type": "string"
     },
-    "content_version": {
+    "correlation_id": {
+      "type": "string"
+    },
+    "causation_id": {
+      "type": "string"
+    },
+    "sequence": {
+      "type": "number"
+    },
+    "producer": {
       "type": "string"
     },
     "payload": {
       "type": "object",
       "additionalProperties": true
     },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
     "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recorded_at": {
       "type": "string",
       "format": "date-time"
     }
   },
   "required": [
+    "event_id",
+    "schema_version",
     "game_id",
     "event_type",
     "aggregate_type",
     "aggregate_id",
+    "aggregate_ref",
     "request_id",
-    "occurred_at"
+    "correlation_id",
+    "sequence",
+    "producer",
+    "occurred_at",
+    "recorded_at"
   ],
   "rls": {
     "read": {

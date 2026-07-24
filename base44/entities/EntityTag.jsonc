@@ -8,11 +8,18 @@
     "content_version": {
       "type": "string"
     },
+    "world_instance_id": {
+      "type": "string"
+    },
     "target_type": {
       "type": "string"
     },
     "target_id": {
       "type": "string"
+    },
+    "target_ref": {
+      "type": "object",
+      "additionalProperties": true
     },
     "tag": {
       "type": "string"
@@ -40,6 +47,34 @@
     "source_id": {
       "type": "string"
     },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "provenance": {
+      "type": "string",
+      "enum": [
+        "direct",
+        "definition",
+        "runtime",
+        "inherited",
+        "system"
+      ],
+      "default": "runtime"
+    },
+    "inheritance_mode": {
+      "type": "string",
+      "enum": [
+        "none",
+        "target",
+        "descendants"
+      ],
+      "default": "none"
+    },
+    "inherited_from_ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
     "expires_at": {
       "type": "string",
       "format": "date-time"
@@ -59,7 +94,9 @@
     "target_id",
     "tag",
     "scope",
-    "visibility"
+    "visibility",
+    "provenance",
+    "inheritance_mode"
   ],
   "rls": {
     "read": {

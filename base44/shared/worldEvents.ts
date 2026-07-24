@@ -1,11 +1,12 @@
 import { evaluateCondition, resolveCharacterEffects } from './rules.ts';
+import { legacyHash31 } from './deterministic.ts';
+import { characterEventInput, publishDomainEvent } from './eventBus.ts';
 
 const phaseOf=(date:Date)=>{const hour=date.getUTCHours();return hour<6?'night':hour<12?'morning':hour<18?'afternoon':hour<21?'evening':'night';};
-const hash=(value:string)=>[...value].reduce((total,char)=>((total*31)+char.charCodeAt(0))>>>0,0);
 const payloadMatches=(expected:any={},actual:any={})=>Object.entries(expected).every(([key,value])=>actual?.[key]===value);
 
 async function environmentFor(base44:any,character:any){
-  const [states,location]=await Promise.all([base44.asServiceRole.entities.WorldState.filter({game_id:character.game_id,content_version:character.content_version},'-updated_date',1),base44.asServiceRole.entities.LocationDefinition.get(character.current_location_id)]),state=states[0],region=String(location?.region_key||'default'),weatherKey=state?.weather_by_region?.[region],weather=weatherKey?(await base44.asServiceRole.entities.WeatherDefinition.filter({game_id:character.game_id,content_version:character.content_version,region_key:region,key:weatherKey},'-created_date',1))[0]:null,time=new Date(state?.current_time||new Date().toISOString());
+  const stateQuery=character.world_instance_id?{world_instance_id:character.world_instance_id}:{game_id:character.game_id,content_version:character.content_version};const [states,location]=await Promise.all([base44.asServiceRole.entities.WorldState.filter(stateQuery,'-updated_date',1),base44.asServiceRole.entities.LocationDefinition.get(character.current_location_id)]),state=states[0],region=String(location?.region_key||'default'),weatherKey=state?.weather_by_region?.[region],weather=weatherKey?(await base44.asServiceRole.entities.WeatherDefinition.filter({game_id:character.game_id,content_version:character.content_version,region_key:region,key:weatherKey},'-created_date',1))[0]:null,time=new Date(state?.current_time||new Date().toISOString());
   return {world:{current_time:time.toISOString(),phase:phaseOf(time),version:state?.version},weather,location};
 }
 
@@ -13,7 +14,7 @@ function timeOccurrences(definition:any,context:any){
   const trigger=definition.trigger||{},before=new Date(context.before).getTime(),after=new Date(context.after).getTime();
   if(trigger.type==='at_time'){const due=new Date(trigger.at_time).getTime();return Number.isFinite(due)&&before<due&&due<=after?[`at:${new Date(due).toISOString()}`]:[];}
   if(!['interval','random_check'].includes(trigger.type))return [];
-  const interval=Math.max(1,Number(trigger.interval_minutes||60))*60000,anchor=new Date(trigger.starts_at||0).getTime(),first=Math.floor((before-anchor)/interval)+1,last=Math.floor((after-anchor)/interval),keys=[];for(let slot=first;slot<=last&&keys.length<100;slot++)if(slot>=0&&(trigger.type!=='random_check'||(hash(`${definition.id}:${context.character.id}:${slot}`)%100000)/100000<=Number(trigger.probability||0)))keys.push(`${trigger.type}:${slot}`);return keys;
+  const interval=Math.max(1,Number(trigger.interval_minutes||60))*60000,anchor=new Date(trigger.starts_at||0).getTime(),first=Math.floor((before-anchor)/interval)+1,last=Math.floor((after-anchor)/interval),keys=[];for(let slot=first;slot<=last&&keys.length<100;slot++)if(slot>=0&&(trigger.type!=='random_check'||(legacyHash31(`${definition.id}:${context.character.id}:${slot}`)%100000)/100000<=Number(trigger.probability||0)))keys.push(`${trigger.type}:${slot}`);return keys;
 }
 
 function signalOccurrences(definition:any,context:any){
@@ -29,7 +30,7 @@ async function execute(base44:any,character:any,definition:any,occurrenceKey:str
   try{
     let fresh=await base44.asServiceRole.entities.Character.get(character.id);if(!await evaluateCondition(base44,{character:fresh,event:context.event,world:context.world,weather:context.weather,location:context.location},definition.conditions||{})){await base44.asServiceRole.entities.WorldEventExecution.update(execution.id,{status:'skipped',version:2});return [];}
     const resolved=await resolveCharacterEffects(base44,fresh,(definition.effects||[]).map((effect:any)=>({...effect,sourceType:effect.sourceType||'world_event',sourceId:effect.sourceId||definition.id})));if((definition.effects||[]).length)fresh=await base44.asServiceRole.entities.Character.update(fresh.id,{...resolved.patch,version:Number(fresh.version||1)+1});
-    const emitted=[];for(const [index,specification] of (definition.emitted_events||[]).entries()){const requestId=`world-event:${definition.id}:${occurrenceKey}:${index}`,duplicates=await base44.asServiceRole.entities.DomainEvent.filter({character_id:fresh.id,event_type:specification.event_type,request_id:requestId},'-occurred_at',1),event=duplicates[0]||await base44.asServiceRole.entities.DomainEvent.create({game_id:fresh.game_id,character_id:fresh.id,event_type:specification.event_type,aggregate_type:specification.aggregate_type||'world_event',aggregate_id:specification.aggregate_id||definition.id,request_id:requestId,content_version:fresh.content_version,payload:{...(specification.payload||{}),world_event_key:definition.key},occurred_at:context.world?.current_time||new Date().toISOString()});emitted.push(event);}
+    const emitted=[];for(const [index,specification] of (definition.emitted_events||[]).entries()){const requestId=`world-event:${definition.id}:${occurrenceKey}:${index}`,event=await publishDomainEvent(base44,{...characterEventInput(fresh,specification.event_type,specification.aggregate_type||'world_event',specification.aggregate_id||definition.id,requestId,{...(specification.payload||{}),world_event_key:definition.key}),occurredAt:context.world?.current_time||new Date().toISOString(),causationId:context.event?.event_id||context.event?.id});emitted.push(event);}
     await base44.asServiceRole.entities.WorldEventExecution.update(execution.id,{status:'completed',outcomes:resolved.outcomes,emitted_event_ids:emitted.map((event:any)=>event.id),version:2});return emitted;
   }catch(error){await base44.asServiceRole.entities.WorldEventExecution.update(execution.id,{status:'failed',error:String(error.message||error),version:2});throw error;}
 }
