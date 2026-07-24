@@ -26,8 +26,12 @@
       "enum": [
         "previewed",
         "completed",
-        "failed"
+        "failed",
+        "rolled_back"
       ]
+    },
+    "snapshot_id": {
+      "type": "string"
     },
     "summary": {
       "type": "object",
@@ -37,6 +41,10 @@
       "type": "string"
     },
     "executed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "rolled_back_at": {
       "type": "string",
       "format": "date-time"
     }

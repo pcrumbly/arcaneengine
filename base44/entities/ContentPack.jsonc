@@ -26,6 +26,22 @@
       ],
       "default": "draft"
     },
+    "package_kind": {
+      "type": "string",
+      "enum": [
+        "core",
+        "mod",
+        "extension"
+      ],
+      "default": "mod"
+    },
+    "engine_api_version": {
+      "type": "string",
+      "default": "1"
+    },
+    "namespace": {
+      "type": "string"
+    },
     "dependency_pack_ids": {
       "type": "array",
       "items": {
@@ -44,7 +60,9 @@
     "key",
     "name",
     "version",
-    "status"
+    "status",
+    "package_kind",
+    "engine_api_version"
   ],
   "rls": {
     "read": {

@@ -15,9 +15,10 @@ import { handleRuntimeCommand } from '../../shared/runtime.ts';
 import { beginCommand, completeCommand, failCommand } from '../../shared/idempotency.ts';
 import { recordCommandFailure } from '../../shared/reliability.ts';
 import { drainOutbox } from '../../shared/eventBus.ts';
+import { handleHardeningCommand } from '../../shared/productionHardening.ts';
 
 const domainHandlers:any={
-  operations:(base44:any,user:any,body:any)=>handleOperationsCommand(base44,user,body),
+  operations:(base44:any,user:any,body:any,requestId:string)=>['CREATE_CHARACTER_BACKUP','RESTORE_CHARACTER_BACKUP','ROLLBACK_MIGRATION','RETRY_DEAD_LETTER'].includes(body.command)?handleHardeningCommand(base44,user,body,requestId):handleOperationsCommand(base44,user,body),
   platform:(base44:any,user:any,body:any)=>handlePlatformCommand(base44,user,body),
   dialogue:(base44:any,user:any,body:any,requestId:string)=>handleDialogueCommand(base44,user,body,requestId),
   party:(base44:any,user:any,body:any,requestId:string)=>handlePartyCommand(base44,user,body,requestId),
@@ -34,10 +35,11 @@ const domainHandlers:any={
 Deno.serve(async (req) => {
   let base44:any=null,executionContext:any=null,currentUser:any=null,currentCommand='',currentRequestId='';
   try {
+    const contentLength=Number(req.headers.get('content-length')||0);if(contentLength>262144)return Response.json({error:'Request payload is too large.'},{status:413});
     base44 = createClientFromRequest(req);
     const user = await base44.auth.me();currentUser=user;
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    const body = await req.json();currentCommand=body?.command||'';
+    const body = await req.json();if(new TextEncoder().encode(JSON.stringify(body)).length>262144)return Response.json({error:'Request payload is too large.'},{status:413});currentCommand=body?.command||'';
     const contractError = validateCommandPayload(body);
     if (contractError) return Response.json({ error:contractError }, { status:422 });
     const command = body.command;

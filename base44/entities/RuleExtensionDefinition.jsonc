@@ -24,6 +24,16 @@
         "effect"
       ]
     },
+    "namespace": {
+      "type": "string"
+    },
+    "package_key": {
+      "type": "string"
+    },
+    "api_version": {
+      "type": "string",
+      "default": "1"
+    },
     "parameters": {
       "type": "array",
       "items": {
