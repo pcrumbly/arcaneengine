@@ -21,7 +21,7 @@ const definitions:Definition[]=[
 ];
 
 const requirements:Record<string,string[]>={
-  MARK_NOTIFICATION_READ:['notificationId'],INVITE_USER:['email','role'],UPDATE_USER_ROLE:['userId','role'],SAVE_ACCOUNT_LOCALE:['locale'],GET_RUNTIME_MODULE:['moduleKey'],
+  MARK_NOTIFICATION_READ:['notificationId'],INVITE_USER:['email','role'],UPDATE_USER_ROLE:['userId','role'],SAVE_ACCOUNT_LOCALE:['locale'],GET_RUNTIME_MODULE:['moduleKey'],GET_WORLD:['characterId'],
   GET_NPC_INTERACTION:['characterId','placementId'],EXECUTE_NPC_ACTION:['characterId','placementId','actionKey'],START_DIALOGUE:['characterId','placementId','actionKey'],SELECT_DIALOGUE_OPTION:['sessionId','sessionVersion','optionKey'],
   GET_PARTY:['characterId'],CREATE_PARTY:['characterId'],ADD_PARTY_MEMBER:['characterId'],REMOVE_PARTY_MEMBER:['characterId'],DISBAND_PARTY:['characterId'],
   GET_COMBAT:['characterId'],START_ENCOUNTER:['characterId','encounterDefinitionId'],SELECT_COMBAT_ACTION:['characterId','combatId','combatVersion','targetParticipantId','abilityId'],COMPLETE_COMBAT:['characterId','combatId'],
