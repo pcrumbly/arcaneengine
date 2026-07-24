@@ -3,6 +3,7 @@ import { authorizedGameIds, requireGamePermission } from './authorization.ts';
 import { randomFloatAt } from './deterministic.ts';
 import { entityRef } from './simulationContracts.ts';
 import { ensureWorldInstance } from './worldInstances.ts';
+import { publicRuleRegistry } from './ruleRegistry.ts';
 
 const audit=async(base44,user,character,command,requestId,details)=>base44.asServiceRole.entities.AuditEvent.create({game_id:character.game_id,actor_user_id:user.id,character_id:character.id,command,request_id:requestId,result:'accepted',details,occurred_at:new Date().toISOString()});
 const assertTest=(character)=>{if(!character.is_test_character)throw new Error('Simulation commands are restricted to test characters.');};
@@ -21,16 +22,17 @@ async function replayCombat(base44,character,combatId){
 async function isolateTestWorld(base44:any,character:any){const membership=(await base44.asServiceRole.entities.PartyMember.filter({character_id:character.id,status:'active'},'-updated_date',1))[0],key=membership?`simulation-party-${membership.party_id}`:`simulation-${character.id}`,instance=await ensureWorldInstance(base44,character.game_id,character.content_version,key);if(character.world_instance_id!==instance.id){await base44.asServiceRole.entities.Character.update(character.id,{world_instance_id:instance.id});character.world_instance_id=instance.id;}if(membership){const party=await base44.asServiceRole.entities.Party.get(membership.party_id);if(party.world_instance_id!==instance.id)await base44.asServiceRole.entities.Party.update(party.id,{world_instance_id:instance.id});}return character;}
 
 export async function loadSimulation(base44,body={}){
+  const registry=publicRuleRegistry(),emptyRules={...registry,extensions:[]};
   const games=await base44.asServiceRole.entities.Game.list('title',100),game=games.find(item=>item.id===body.gameId)||games[0]||null;
-  if(!game)return {games,game:null,release:null,characters:[],locations:[],items:[],statuses:[],quests:[],encounters:[],combats:[],questInstances:[]};
+  if(!game)return {games,game:null,release:null,characters:[],locations:[],items:[],statuses:[],quests:[],encounters:[],combats:[],questInstances:[],rules:emptyRules};
   const releases=await base44.asServiceRole.entities.ContentRelease.filter({game_id:game.id,status:'published'},'-published_at',50),release=releases.find(item=>item.version===body.contentVersion)||releases[0]||null;
-  if(!release)return {games,game,release:null,characters:[],locations:[],items:[],statuses:[],quests:[],encounters:[],combats:[],questInstances:[]};
-  const [characters,locations,items,statuses,quests,encounters]=await Promise.all([
-    base44.asServiceRole.entities.Character.filter({game_id:game.id,content_version:release.version,is_test_character:true},'-updated_date',100),base44.asServiceRole.entities.LocationDefinition.filter({game_id:game.id,content_version:release.version},'name',200),base44.asServiceRole.entities.ItemDefinition.filter({game_id:game.id,content_version:release.version},'name',200),base44.asServiceRole.entities.StatusDefinition.filter({game_id:game.id,content_version:release.version},'name',200),base44.asServiceRole.entities.QuestDefinition.filter({game_id:game.id,content_version:release.version},'name',200),base44.asServiceRole.entities.EncounterDefinition.filter({game_id:game.id,content_version:release.version},'name',200)
+  if(!release)return {games,game,release:null,characters:[],locations:[],items:[],statuses:[],quests:[],encounters:[],combats:[],questInstances:[],rules:emptyRules};
+  const [characters,locations,items,statuses,quests,encounters,extensions]=await Promise.all([
+    base44.asServiceRole.entities.Character.filter({game_id:game.id,content_version:release.version,is_test_character:true},'-updated_date',100),base44.asServiceRole.entities.LocationDefinition.filter({game_id:game.id,content_version:release.version},'name',200),base44.asServiceRole.entities.ItemDefinition.filter({game_id:game.id,content_version:release.version},'name',200),base44.asServiceRole.entities.StatusDefinition.filter({game_id:game.id,content_version:release.version},'name',200),base44.asServiceRole.entities.QuestDefinition.filter({game_id:game.id,content_version:release.version},'name',200),base44.asServiceRole.entities.EncounterDefinition.filter({game_id:game.id,content_version:release.version},'name',200),base44.asServiceRole.entities.RuleExtensionDefinition.filter({game_id:game.id,content_version:release.version},'kind',200)
   ]);
   for(const testCharacter of characters)await isolateTestWorld(base44,testCharacter);const character=characters.find(item=>item.id===body.characterId)||characters[0]||null;
   const [combats,questInstances]=character?await Promise.all([base44.asServiceRole.entities.CombatInstance.filter({character_id:character.id},'-created_date',100),base44.asServiceRole.entities.QuestInstance.filter({character_id:character.id},'-updated_date',100)]):[[],[]];
-  return {games,game,release,characters,locations,items,statuses,quests,encounters,combats,questInstances};
+  return {games,game,release,characters,locations,items,statuses,quests,encounters,combats,questInstances,rules:{...registry,extensions:extensions.map(row=>({type:row.key,name:row.name,description:row.description,kind:row.kind,parameters:row.parameters||[]}))}};
 }
 
 async function createTestCharacter(base44,user,body,requestId){
