@@ -1,5 +1,5 @@
 {
-  "name": "LocationDefinition",
+  "name": "WeatherDefinition",
   "type": "object",
   "properties": {
     "game_id": {
@@ -14,26 +14,22 @@
     "name": {
       "type": "string"
     },
-    "description": {
-      "type": "string"
-    },
-    "location_type": {
-      "type": "string"
-    },
     "region_key": {
       "type": "string",
       "default": "default"
     },
-    "parent_location_id": {
+    "description": {
       "type": "string"
     },
-    "tags": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+    "temperature": {
+      "type": "number"
     },
-    "available_actions": {
+    "weight": {
+      "type": "number",
+      "minimum": 1,
+      "default": 1
+    },
+    "tags": {
       "type": "array",
       "items": {
         "type": "string"
@@ -45,7 +41,7 @@
     "content_version",
     "key",
     "name",
-    "location_type"
+    "region_key"
   ],
   "rls": {
     "read": {

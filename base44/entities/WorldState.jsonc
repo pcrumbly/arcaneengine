@@ -1,5 +1,5 @@
 {
-  "name": "LocationDefinition",
+  "name": "WorldState",
   "type": "object",
   "properties": {
     "game_id": {
@@ -8,44 +8,31 @@
     "content_version": {
       "type": "string"
     },
-    "key": {
-      "type": "string"
-    },
-    "name": {
-      "type": "string"
-    },
-    "description": {
-      "type": "string"
-    },
-    "location_type": {
-      "type": "string"
-    },
-    "region_key": {
+    "current_time": {
       "type": "string",
-      "default": "default"
+      "format": "date-time"
     },
-    "parent_location_id": {
-      "type": "string"
-    },
-    "tags": {
-      "type": "array",
-      "items": {
+    "weather_by_region": {
+      "type": "object",
+      "additionalProperties": {
         "type": "string"
       }
     },
-    "available_actions": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+    "weather_slot": {
+      "type": "number",
+      "default": 0
+    },
+    "version": {
+      "type": "number",
+      "default": 1
     }
   },
   "required": [
     "game_id",
     "content_version",
-    "key",
-    "name",
-    "location_type"
+    "current_time",
+    "weather_by_region",
+    "version"
   ],
   "rls": {
     "read": {
