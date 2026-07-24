@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     base44 = createClientFromRequest(req);
     const user = await base44.auth.me();currentUser=user;
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    const body = await req.json(),payloadSize=new TextEncoder().encode(JSON.stringify(body)).length,payloadLimit=body?.command==='IMPORT_CONTENT_PACKS'?10485760:262144;if(payloadSize>payloadLimit)return Response.json({error:'Request payload is too large.'},{status:413});currentCommand=body?.command||'';
+    const body = await req.json(),payloadSize=new TextEncoder().encode(JSON.stringify(body)).length,payloadLimit=['IMPORT_CONTENT_PACKS','PREVIEW_BULK_STUDIO_CONTENT','IMPORT_BULK_STUDIO_CONTENT'].includes(body?.command)?10485760:262144;if(payloadSize>payloadLimit)return Response.json({error:'Request payload is too large.'},{status:413});currentCommand=body?.command||'';
     const contractError = validateCommandPayload(body);
     if (contractError) return Response.json({ error:contractError }, { status:422 });
     const command = body.command;
