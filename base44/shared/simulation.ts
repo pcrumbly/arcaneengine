@@ -18,7 +18,7 @@ async function replayCombat(base44,character,combatId){
   return {combat_id:combat.id,seed:combat.seed,events_checked:events.length,rolls_checked:checked,matched:mismatches.length===0,mismatches};
 }
 
-async function isolateTestWorld(base44:any,character:any){const instance=await ensureWorldInstance(base44,character.game_id,character.content_version,`simulation-${character.id}`);if(character.world_instance_id!==instance.id){await base44.asServiceRole.entities.Character.update(character.id,{world_instance_id:instance.id});character.world_instance_id=instance.id;}return character;}
+async function isolateTestWorld(base44:any,character:any){const membership=(await base44.asServiceRole.entities.PartyMember.filter({character_id:character.id,status:'active'},'-updated_date',1))[0],key=membership?`simulation-party-${membership.party_id}`:`simulation-${character.id}`,instance=await ensureWorldInstance(base44,character.game_id,character.content_version,key);if(character.world_instance_id!==instance.id){await base44.asServiceRole.entities.Character.update(character.id,{world_instance_id:instance.id});character.world_instance_id=instance.id;}if(membership){const party=await base44.asServiceRole.entities.Party.get(membership.party_id);if(party.world_instance_id!==instance.id)await base44.asServiceRole.entities.Party.update(party.id,{world_instance_id:instance.id});}return character;}
 
 export async function loadSimulation(base44,body={}){
   const games=await base44.asServiceRole.entities.Game.list('title',100),game=games.find(item=>item.id===body.gameId)||games[0]||null;
