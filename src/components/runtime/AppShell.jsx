@@ -10,7 +10,7 @@ export default function AppShell() {
   useRuntimeShortcuts();
   const {state,game,navigation,theme}=useRuntimeManifest();
   const {user}=useAuth();
-  const visibleNavigation=(user?.role==='admin'?navigation:navigation.filter(item=>item.route!=='/studio')).map(item=>item.route==='/studio'?{...item,label:'Admin Console'}:item);
+  const visibleNavigation=(user?.role==='admin'?navigation:navigation.filter(item=>!item.route.startsWith('/studio'))).map(item=>item.route==='/studio'?{...item,label:'Admin Console'}:item);
   return <RuntimeI18nProvider value={state?.translations||{}}><div className="runtime-themed min-h-screen bg-runtime text-runtime-text" style={theme}>
     <RuntimeHeader state={state} game={game}/>
     <div className="mx-auto flex max-w-[1600px]">

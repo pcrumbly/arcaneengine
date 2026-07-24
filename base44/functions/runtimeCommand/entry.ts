@@ -16,6 +16,7 @@ import { beginCommand, completeCommand, failCommand } from '../../shared/idempot
 import { recordCommandFailure } from '../../shared/reliability.ts';
 import { drainOutbox } from '../../shared/eventBus.ts';
 import { handleHardeningCommand } from '../../shared/productionHardening.ts';
+import { canExecuteCommand } from '../../shared/accessControl.ts';
 
 const domainHandlers:any={
   operations:(base44:any,user:any,body:any,requestId:string)=>['CREATE_CHARACTER_BACKUP','RESTORE_CHARACTER_BACKUP','ROLLBACK_MIGRATION','RETRY_DEAD_LETTER'].includes(body.command)?handleHardeningCommand(base44,user,body,requestId):handleOperationsCommand(base44,user,body),
@@ -45,7 +46,8 @@ Deno.serve(async (req) => {
     const command = body.command;
     const contract:any = getCommandContract(command);
     const requestId = body.requestId || crypto.randomUUID();currentRequestId=requestId;
-    if (contract.domain === 'contracts') return Response.json(publicCommandContracts());
+    if (contract.domain === 'contracts') return Response.json(publicCommandContracts(user.role));
+    if(!canExecuteCommand(user,command))return Response.json({error:'Forbidden'},{status:403});
     executionContext=await beginCommand(base44,user,body,requestId);
     if(executionContext.replay)return executionContext.replay;
     await drainOutbox(base44,10);
