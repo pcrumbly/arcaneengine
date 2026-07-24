@@ -5,6 +5,6 @@ export async function recordCommandRecovery(base44:any,execution:any,kind='lease
   try{await base44.asServiceRole.entities.OperationalEvent.create({user_id:execution.actor_user_id,category:'command_recovery',severity:'warning',command:execution.command,message:`Recovered ${execution.command} after an interrupted attempt.`,metadata:{request_id:execution.request_id,aggregate_id:execution.aggregate_id||null,kind},occurred_at:new Date().toISOString()});}catch{}
 }
 export function summarizeCommandHealth(executions:any[]){
-  const now=Date.now(),processing=executions.filter(row=>row.status==='processing'),failed=executions.filter(row=>row.status==='failed');
-  return {processing:processing.filter(row=>new Date(row.lease_expires_at||0).getTime()>now).length,stale:processing.filter(row=>new Date(row.lease_expires_at||0).getTime()<=now).length,failed:failed.length,completed:executions.filter(row=>row.status==='completed').length};
+  const now=Date.now(),processing=executions.filter(row=>row.status==='processing'),failed=executions.filter(row=>row.status==='failed'),durations=executions.map(row=>Number(row.duration_ms)).filter(Number.isFinite).sort((a,b)=>a-b),average=durations.length?Math.round(durations.reduce((sum,value)=>sum+value,0)/durations.length):0,p95=durations.length?durations[Math.min(durations.length-1,Math.ceil(durations.length*0.95)-1)]:0;
+  return {processing:processing.filter(row=>new Date(row.lease_expires_at||0).getTime()>now).length,stale:processing.filter(row=>new Date(row.lease_expires_at||0).getTime()<=now).length,failed:failed.length,completed:executions.filter(row=>row.status==='completed').length,latency_ms:{samples:durations.length,average,p95,maximum:durations.at(-1)||0}};
 }

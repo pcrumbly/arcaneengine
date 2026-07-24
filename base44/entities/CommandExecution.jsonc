@@ -8,6 +8,9 @@
     "request_id": {
       "type": "string"
     },
+    "request_fingerprint": {
+      "type": "string"
+    },
     "command": {
       "type": "string"
     },
@@ -39,9 +42,20 @@
     "error": {
       "type": "string"
     },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "completed_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "duration_ms": {
+      "type": "number"
+    },
+    "attempt_count": {
+      "type": "number",
+      "default": 1
     }
   },
   "required": [
