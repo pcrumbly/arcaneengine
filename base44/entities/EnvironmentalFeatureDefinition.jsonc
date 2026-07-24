@@ -74,6 +74,10 @@
         ]
       }
     },
+    "regeneration_minutes": {
+      "type": "number",
+      "minimum": 1
+    },
     "time_effects": {
       "type": "array",
       "items": {
