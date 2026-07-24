@@ -1,0 +1,87 @@
+{
+  "name": "StoryFact",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "world_instance_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "fact_key": {
+      "type": "string"
+    },
+    "value": {
+      "type": [
+        "object",
+        "string",
+        "number",
+        "boolean",
+        "array",
+        "null"
+      ]
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "public",
+        "journal",
+        "hidden"
+      ],
+      "default": "journal"
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "source_event_id": {
+      "type": "string"
+    },
+    "world_minute": {
+      "type": "number",
+      "minimum": 0
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "world_instance_id",
+    "content_version",
+    "fact_key",
+    "value",
+    "visibility",
+    "world_minute",
+    "version"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

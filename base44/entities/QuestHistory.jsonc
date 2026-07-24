@@ -1,0 +1,83 @@
+{
+  "name": "QuestHistory",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "world_instance_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "quest_instance_id": {
+      "type": "string"
+    },
+    "quest_definition_id": {
+      "type": "string"
+    },
+    "entry_type": {
+      "type": "string"
+    },
+    "objective_key": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "source_event_id": {
+      "type": "string"
+    },
+    "dedupe_key": {
+      "type": "string"
+    },
+    "world_minute": {
+      "type": "number",
+      "minimum": 0
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "character_id",
+    "quest_instance_id",
+    "entry_type",
+    "summary",
+    "dedupe_key",
+    "occurred_at"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

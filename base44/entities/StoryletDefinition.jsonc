@@ -1,5 +1,5 @@
 {
-  "name": "QuestDefinition",
+  "name": "StoryletDefinition",
   "type": "object",
   "properties": {
     "game_id": {
@@ -17,85 +17,62 @@
     "description": {
       "type": "string"
     },
-    "category": {
-      "type": "string"
+    "trigger_type": {
+      "type": "string",
+      "enum": [
+        "event",
+        "tick"
+      ],
+      "default": "event"
     },
-    "availability_conditions": {
-      "type": "object",
-      "additionalProperties": true
-    },
-    "initial_variables": {
-      "type": "object",
-      "additionalProperties": true
-    },
-    "objective_graph": {
-      "type": "object",
-      "additionalProperties": true
-    },
-    "event_triggers": {
+    "event_types": {
       "type": "array",
       "items": {
         "type": "string"
       }
     },
-    "completion_rules": {
+    "tick_interval_minutes": {
+      "type": "number",
+      "minimum": 1
+    },
+    "priority": {
+      "type": "number",
+      "default": 0
+    },
+    "conditions": {
       "type": "object",
       "additionalProperties": true
     },
-    "failure_rules": {
-      "type": "object",
-      "additionalProperties": true
-    },
-    "expiration_rules": {
-      "type": "object",
-      "additionalProperties": true
-    },
-    "relationship_changes": {
+    "effects": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": true
       }
     },
-    "outcome_summaries": {
+    "emitted_events": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": true
       }
     },
-    "rewards": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": true
-      }
+    "once_per_character": {
+      "type": "boolean",
+      "default": false
     },
-    "reward_selection": {
+    "cooldown_minutes": {
+      "type": "number",
+      "minimum": 0,
+      "default": 0
+    },
+    "recap": {
       "type": "object",
       "additionalProperties": true
     },
-    "repeatability": {
-      "type": "string",
-      "enum": [
-        "never",
-        "repeatable",
-        "scheduled"
-      ],
-      "default": "never"
-    },
-    "visibility": {
-      "type": "string",
-      "enum": [
-        "visible",
-        "discovered",
-        "hidden"
-      ],
-      "default": "visible"
-    },
-    "journal": {
-      "type": "object",
-      "additionalProperties": true
+    "enabled": {
+      "type": "boolean",
+      "default": true
     },
     "tags": {
       "type": "array",
@@ -109,7 +86,8 @@
     "content_version",
     "key",
     "name",
-    "objective_graph"
+    "trigger_type",
+    "enabled"
   ],
   "rls": {
     "read": {

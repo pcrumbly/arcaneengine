@@ -35,6 +35,7 @@
         "ACTIVE",
         "COMPLETED",
         "FAILED",
+        "REPLACED",
         "SKIPPED"
       ],
       "default": "ACTIVE"
@@ -42,6 +43,38 @@
     "optional": {
       "type": "boolean",
       "default": false
+    },
+    "alternative_group": {
+      "type": "string"
+    },
+    "replacement_for": {
+      "type": "string"
+    },
+    "replacement_objective_key": {
+      "type": "string"
+    },
+    "activation_condition": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "failure_condition": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "activated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "failed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "replaced_by_key": {
+      "type": "string"
     },
     "processed_event_ids": {
       "type": "array",

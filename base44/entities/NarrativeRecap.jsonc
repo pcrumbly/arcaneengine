@@ -1,0 +1,91 @@
+{
+  "name": "NarrativeRecap",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "world_instance_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "recap_type": {
+      "type": "string",
+      "enum": [
+        "quest_outcome",
+        "storylet",
+        "consequence",
+        "periodic"
+      ]
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "title": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "outcome_key": {
+      "type": "string"
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "world_minute": {
+      "type": "number",
+      "minimum": 0
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dedupe_key": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "game_id",
+    "world_instance_id",
+    "content_version",
+    "character_id",
+    "recap_type",
+    "title",
+    "summary",
+    "world_minute",
+    "occurred_at",
+    "dedupe_key"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

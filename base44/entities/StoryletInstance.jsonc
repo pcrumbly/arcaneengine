@@ -1,0 +1,92 @@
+{
+  "name": "StoryletInstance",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "world_instance_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "definition_id": {
+      "type": "string"
+    },
+    "definition_key": {
+      "type": "string"
+    },
+    "occurrence_key": {
+      "type": "string"
+    },
+    "source_event_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "processing",
+        "completed",
+        "failed"
+      ],
+      "default": "processing"
+    },
+    "started_minute": {
+      "type": "number",
+      "minimum": 0
+    },
+    "completed_minute": {
+      "type": "number",
+      "minimum": 0
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "error": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "world_instance_id",
+    "content_version",
+    "character_id",
+    "definition_id",
+    "definition_key",
+    "occurrence_key",
+    "status",
+    "started_minute",
+    "version"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "name": "QuestRelationship",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "world_instance_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "quest_instance_id": {
+      "type": "string"
+    },
+    "source_quest_key": {
+      "type": "string"
+    },
+    "target_quest_key": {
+      "type": "string"
+    },
+    "relationship_key": {
+      "type": "string"
+    },
+    "value": {
+      "type": "number",
+      "default": 0
+    },
+    "state": {
+      "type": "string",
+      "default": "active"
+    },
+    "source_event_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "world_instance_id",
+    "content_version",
+    "character_id",
+    "source_quest_key",
+    "target_quest_key",
+    "relationship_key",
+    "value",
+    "state",
+    "version"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

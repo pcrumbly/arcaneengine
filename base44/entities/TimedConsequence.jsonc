@@ -1,5 +1,5 @@
 {
-  "name": "QuestInstance",
+  "name": "TimedConsequence",
   "type": "object",
   "properties": {
     "game_id": {
@@ -11,66 +11,65 @@
     "content_version": {
       "type": "string"
     },
-    "definition_id": {
-      "type": "string"
-    },
-    "definition_ref": {
-      "type": "object",
-      "additionalProperties": true
-    },
     "character_id": {
       "type": "string"
     },
-    "state": {
+    "consequence_key": {
+      "type": "string"
+    },
+    "dedupe_key": {
+      "type": "string"
+    },
+    "due_minute": {
+      "type": "number",
+      "minimum": 0
+    },
+    "status": {
       "type": "string",
       "enum": [
-        "AVAILABLE",
-        "ACTIVE",
-        "COMPLETED",
-        "FAILED",
-        "ABANDONED"
+        "scheduled",
+        "processing",
+        "completed",
+        "cancelled",
+        "failed"
       ],
-      "default": "ACTIVE"
+      "default": "scheduled"
     },
-    "accepted_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "completed_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "failed_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "expires_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "branch_state": {
+    "conditions": {
       "type": "object",
       "additionalProperties": true
     },
-    "variables": {
+    "effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "emitted_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "summary": {
+      "type": "string"
+    },
+    "source_ref": {
       "type": "object",
       "additionalProperties": true
     },
-    "outcome_key": {
+    "source_event_id": {
       "type": "string"
     },
-    "outcome_summary": {
-      "type": "string"
+    "result": {
+      "type": "object",
+      "additionalProperties": true
     },
-    "reward_state": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "granting",
-        "granted",
-        "none"
-      ],
-      "default": "pending"
+    "processed_minute": {
+      "type": "number",
+      "minimum": 0
     },
     "version": {
       "type": "number",
@@ -79,10 +78,14 @@
   },
   "required": [
     "game_id",
+    "world_instance_id",
     "content_version",
-    "definition_id",
     "character_id",
-    "state"
+    "consequence_key",
+    "dedupe_key",
+    "due_minute",
+    "status",
+    "version"
   ],
   "rls": {
     "read": {
