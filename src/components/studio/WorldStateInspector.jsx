@@ -1,0 +1,15 @@
+const date=value=>value?new Date(value).toLocaleString():'—';
+
+export default function WorldStateInspector({state}){
+  if(!state)return <section className="rounded border border-white/10 p-4 lg:col-span-2"><h4 className="text-sm font-medium">World-state inspector</h4><p className="mt-2 text-xs text-slate-500">Select or create a test character to inspect an isolated world.</p></section>;
+  const pending=state.consequences.filter(row=>['scheduled','processing'].includes(row.status));
+  return <section className="space-y-4 rounded border border-white/10 p-4 lg:col-span-2">
+    <div><h4 className="text-sm font-medium">World-state inspector</h4><p className="text-xs text-slate-500">Authoritative state for the selected test character’s isolated world instance.</p></div>
+    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4"><Metric label="World minute" value={state.clock?.current_minute??state.instance?.current_minute??0}/><Metric label="World time" value={date(state.clock?.current_time||state.instance?.current_time)}/><Metric label="Scheduled tasks" value={state.tasks.length}/><Metric label="Pending consequences" value={pending.length}/></div>
+    <div className="grid gap-4 xl:grid-cols-2"><Table title="Simulation schedule" empty="No scheduled tasks." headings={['Task','Due','Status']} rows={state.tasks.map(row=>[row.task_key,row.due_minute,row.status])}/><Table title="Recent simulation ticks" empty="No simulation ticks." headings={['Scope','Through minute','Status']} rows={state.ticks.slice(0,10).map(row=>[row.scope,row.to_minute,row.status])}/><Table title="Timed consequences" empty="No timed consequences." headings={['Consequence','Due','Status']} rows={state.consequences.slice(0,10).map(row=>[row.consequence_key,row.due_minute,row.status])}/><Table title="Persistent narrative state" empty="No story facts recorded." headings={['Fact','Value','Minute']} rows={state.facts.slice(0,10).map(row=>[row.fact_key,JSON.stringify(row.value),row.world_minute])}/></div>
+    <p className="text-xs text-slate-500">{state.activities.length} NPC activities tracked · world instance {state.instance?.key||state.instance?.id}</p>
+  </section>;
+}
+
+function Metric({label,value}){return <div className="rounded bg-runtime p-3"><p className="text-[11px] uppercase tracking-wide text-slate-500">{label}</p><p className="mt-1 break-words text-sm text-slate-200">{value}</p></div>}
+function Table({title,empty,headings,rows}){return <div className="overflow-hidden rounded bg-runtime"><h5 className="border-b border-white/10 px-3 py-2 text-xs font-medium">{title}</h5>{rows.length?<div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="text-slate-500"><tr>{headings.map(item=><th key={item} className="px-3 py-2 font-medium">{item}</th>)}</tr></thead><tbody>{rows.map((row,index)=><tr key={index} className="border-t border-white/5">{row.map((item,cell)=><td key={cell} className="max-w-48 truncate px-3 py-2 text-slate-300">{String(item??'—')}</td>)}</tr>)}</tbody></table></div>:<p className="p-3 text-xs text-slate-500">{empty}</p>}</div>}
