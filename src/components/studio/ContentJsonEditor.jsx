@@ -1,0 +1,9 @@
+import { useEffect,useState } from 'react';
+const reserved=new Set(['id','created_date','updated_date','created_by_id','game_id','content_version','is_sample']);
+const editable=item=>Object.fromEntries(Object.entries(item||{}).filter(([key])=>!reserved.has(key)));
+export default function ContentJsonEditor({item,busy,onSave,onDelete,onCancel}){
+  const [value,setValue]=useState(''),[error,setError]=useState('');
+  useEffect(()=>{setValue(JSON.stringify(editable(item),null,2));setError('')},[item]);
+  const submit=event=>{event.preventDefault();try{const parsed=JSON.parse(value);if(!parsed||Array.isArray(parsed)||typeof parsed!=='object')throw new Error('Content must be a JSON object.');onSave(parsed)}catch(caught){setError(caught.message)}};
+  return <form onSubmit={submit} className="space-y-4 rounded-lg border border-white/10 bg-runtime-surface p-4"><div><h3 className="font-semibold">Full content JSON</h3><p className="text-xs text-slate-500">Author every schema-supported field; protected identity and version fields are assigned by the engine.</p></div>{error&&<p className="text-sm text-red-300">{error}</p>}<textarea value={value} onChange={event=>setValue(event.target.value)} rows={24} spellCheck="false" className="w-full rounded border border-white/10 bg-runtime p-3 font-mono text-xs"/><div className="flex justify-end gap-2">{item?.id&&onDelete&&<button type="button" disabled={busy} onClick={onDelete} className="mr-auto rounded border border-red-400/20 px-3 py-2 text-sm text-red-300">Delete</button>}<button type="button" onClick={onCancel} className="rounded border border-white/10 px-3 py-2 text-sm">Cancel</button><button disabled={busy} className="rounded bg-runtime-accent px-4 py-2 text-sm font-semibold text-slate-950">Save JSON</button></div></form>;
+}

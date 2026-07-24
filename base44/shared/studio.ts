@@ -1,7 +1,8 @@
-import { createBasePack, resolveContentPackLayers } from './contentPacks.ts';
+import { contentDefinitionTypes, createBasePack, resolveContentPackLayers } from './contentPacks.ts';
+import { exportContentBundle, importContentBundle } from './contentBundles.ts';
 import { requireGamePermission } from './authorization.ts';
 import { validateCalendarConfig,validateSimulationConfig } from './calendar.ts';
-const contentTypes = ['TagDefinition','InteractionRuleDefinition','EnvironmentalFeatureDefinition','ItemRecipeDefinition','WeatherDefinition','WorldEventDefinition','FactionDefinition','FactionOperationDefinition','CrimeDefinition','KnowledgeDefinition','RumorDefinition','StoryFactDefinition','StoryletDefinition','LocationDefinition','Connection','NPCDefinition','NPCInstance','NPCPlacement','DialogueGraph','QuestDefinition','AchievementDefinition','ItemDefinition','AbilityDefinition','EncounterDefinition','AttributeDefinition','SkillDefinition','FormulaDefinition','EffectDefinition','StatusDefinition','LocalizationEntry','RuleExtensionDefinition','RuntimeModuleDefinition'];
+const contentTypes = contentDefinitionTypes;
 const reserved = new Set(['id','game_id','content_version','created_date','updated_date','created_by_id']);
 const gameFields = ['title','description','terminology','theme','enabled_modules','navigation','header_indicators','character_defaults','calendar','simulation','rules'];
 const clean = (values:any) => Object.fromEntries(Object.entries(values || {}).filter(([key]) => !reserved.has(key)));
@@ -23,6 +24,8 @@ export async function handleStudioAuthoringCommand(base44:any,user:any,body:any)
     return Response.json({game:await base44.asServiceRole.entities.Game.update(game.id,patch)});
   }
   if(body.command==='CREATE_CONTENT_PACK'){const game=await base44.asServiceRole.entities.Game.get(body.gameId),access=await requireGamePermission(base44,user,game.id,'content:write');if(access)return access;const key=String(body.values?.key||'').trim(),name=String(body.values?.name||'').trim(),version=String(body.values?.version||'').trim();if(!key||!name||!version)return Response.json({error:'Pack name, key, and version are required.'},{status:422});const duplicate=await base44.asServiceRole.entities.ContentPack.filter({game_id:game.id,key},'-created_date',1);if(duplicate.length)return Response.json({error:'That content pack key already exists.'},{status:409});const dependencies=await resolveContentPackLayers(base44,game.id,body.values?.dependencyPackIds||[]),pack=await base44.asServiceRole.entities.ContentPack.create({game_id:game.id,key,name,description:String(body.values?.description||''),version,status:'draft',package_kind:['core','mod','extension'].includes(body.values?.packageKind)?body.values.packageKind:'mod',engine_api_version:String(body.values?.engineApiVersion||'1'),namespace:String(body.values?.namespace||key),dependency_pack_ids:dependencies.map((item:any)=>item.id),module_keys:body.values?.moduleKeys||[]});return Response.json({pack});}
+  if(body.command==='EXPORT_CONTENT_PACKS'){const access=await requireGamePermission(base44,user,body.gameId,'content:read');if(access)return access;return Response.json({bundle:await exportContentBundle(base44,body.gameId)});}
+  if(body.command==='IMPORT_CONTENT_PACKS'){const access=await requireGamePermission(base44,user,body.gameId,'content:write');if(access)return access;const imported=await importContentBundle(base44,body.gameId,body.bundle);return Response.json(imported);}
   if(!contentTypes.includes(body.contentType))return Response.json({error:'Unsupported content type.'},{status:422});
   const release=await base44.asServiceRole.entities.ContentRelease.get(body.releaseId);
   const permission=body.command==='GET_STUDIO_CONTENT'?'content:read':'content:write',access=await requireGamePermission(base44,user,release.game_id,permission);if(access)return access;

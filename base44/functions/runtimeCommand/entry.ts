@@ -36,11 +36,11 @@ const domainHandlers:any={
 Deno.serve(async (req) => {
   let base44:any=null,executionContext:any=null,currentUser:any=null,currentCommand='',currentRequestId='';
   try {
-    const contentLength=Number(req.headers.get('content-length')||0);if(contentLength>262144)return Response.json({error:'Request payload is too large.'},{status:413});
+    const contentLength=Number(req.headers.get('content-length')||0);if(contentLength>10485760)return Response.json({error:'Request payload is too large.'},{status:413});
     base44 = createClientFromRequest(req);
     const user = await base44.auth.me();currentUser=user;
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    const body = await req.json();if(new TextEncoder().encode(JSON.stringify(body)).length>262144)return Response.json({error:'Request payload is too large.'},{status:413});currentCommand=body?.command||'';
+    const body = await req.json(),payloadSize=new TextEncoder().encode(JSON.stringify(body)).length,payloadLimit=body?.command==='IMPORT_CONTENT_PACKS'?10485760:262144;if(payloadSize>payloadLimit)return Response.json({error:'Request payload is too large.'},{status:413});currentCommand=body?.command||'';
     const contractError = validateCommandPayload(body);
     if (contractError) return Response.json({ error:contractError }, { status:422 });
     const command = body.command;

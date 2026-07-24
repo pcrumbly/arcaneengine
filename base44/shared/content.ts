@@ -1,12 +1,12 @@
 import { createNotification } from './operations.ts';
 import { validateConditionDefinition, validateEffectDefinitions, validateFormulaDefinitions } from './rules.ts';
 import { validateObjectiveGraph, validateRewardSelection } from './quests.ts';
-import { resolveContentPackLayers } from './contentPacks.ts';
+import { contentDefinitionTypes, resolveContentPackLayers } from './contentPacks.ts';
 import { requireGamePermission } from './authorization.ts';
 import { collectTagReferences, TAG_PATTERN, tagCatalog, validateTagCatalog } from './tags.ts';
 import { ensureWorldInstance } from './worldInstances.ts';
 import { compareContentReleases } from './contentComparison.ts';
-const entities = ['TagDefinition','InteractionRuleDefinition','EnvironmentalFeatureDefinition','ItemRecipeDefinition','WeatherDefinition','WorldEventDefinition','FactionDefinition','FactionOperationDefinition','CrimeDefinition','KnowledgeDefinition','RumorDefinition','StoryFactDefinition','StoryletDefinition','LocationDefinition','Connection','QuestDefinition','AchievementDefinition','ItemDefinition','AbilityDefinition','EncounterDefinition','AttributeDefinition','SkillDefinition','FormulaDefinition','EffectDefinition','StatusDefinition','NPCDefinition','NPCInstance','NPCPlacement','DialogueGraph','LocalizationEntry','RuleExtensionDefinition','RuntimeModuleDefinition'];
+const entities = contentDefinitionTypes;
 async function releaseData(base44:any, release:any) { const rows:any = {}; await Promise.all(entities.map(async name => { rows[name] = await base44.asServiceRole.entities[name].filter({game_id:release.game_id,content_version:release.version},'created_date',500); })); return rows; }
 async function validate(base44:any, release:any) {
   const data=await releaseData(base44,release), errors:any[]=[], warnings:any[]=[],conditionExtensions=data.RuleExtensionDefinition.filter((item:any)=>item.kind==='condition').map((item:any)=>item.key),effectExtensions=data.RuleExtensionDefinition.filter((item:any)=>item.kind==='effect').map((item:any)=>item.key),validateCondition=(value:any)=>validateConditionDefinition(value,conditionExtensions),validateEffects=(value:any)=>validateEffectDefinitions(value,effectExtensions);
