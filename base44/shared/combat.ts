@@ -143,7 +143,8 @@ export async function handleCombatCommand(base44:any, user:any, body:any, reques
   }
   if (body.command === 'SELECT_COMBAT_ACTION') {
     let combat = await base44.asServiceRole.entities.CombatInstance.get(body.combatId);
-    if (combat.character_id !== character.id) return Response.json({ error: 'Combat ownership could not be verified.' }, { status: 403 });
+    const partyContext=await getPartyContext(base44,character),canControl=combat.character_id===character.id||Boolean(combat.party_id&&partyContext.party?.id===combat.party_id);
+    if (!canControl) return Response.json({ error: 'Combat ownership could not be verified.' }, { status: 403 });
     const duplicates = await base44.asServiceRole.entities.CombatAction.filter({ combat_instance_id: combat.id, client_request_id: requestId }, '-resolved_at', 1);
     if (duplicates.length) return Response.json(await loadState(base44, character));
     if (combat.state !== 'AWAITING_ACTIONS' || combat.version !== body.combatVersion) return Response.json({ error: 'Combat state changed. Refresh and try again.' }, { status: 409 });
@@ -157,21 +158,22 @@ export async function handleCombatCommand(base44:any, user:any, body:any, reques
     if (Number(actor.cooldowns?.[ability.id]||0)>0) return Response.json({ error: `That ability is on cooldown for ${actor.cooldowns[ability.id]} more turn${actor.cooldowns[ability.id]===1?'':'s'}.` }, { status: 422 });
     if (!await evaluateCondition(base44, { character:actorCharacter, actor, target }, ability.requirements)) return Response.json({ error: 'This participant does not meet the ability requirements.' }, { status: 422 });
     combat = await resolveAction(base44, combat, actor, target, ability, requestId, rules);
-    combat = await conclude(base44, combat, character);
+    const combatOwner=combat.character_id===character.id?character:await base44.entities.Character.get(combat.character_id);
+    combat = await conclude(base44, combat, combatOwner);
     if (combat.state === 'AWAITING_ACTIONS') {
       const encounter=await base44.asServiceRole.entities.EncounterDefinition.get(combat.encounter_definition_id),model=encounter.turn_model||'individual_initiative';let participants=await base44.asServiceRole.entities.CombatParticipant.filter({combat_instance_id:combat.id},'-initiative',30),players=participants.filter((item:any)=>item.team==='player'&&item.status==='active'),enemies=participants.filter((item:any)=>item.team!=='player'&&item.status==='active'),priorIndex=Math.max(0,players.findIndex((item:any)=>item.id===actor.id)),nextIndex=(priorIndex+1)%Math.max(1,players.length),nextPlayer=players[nextIndex],roundAdvance=nextIndex===0;
       let enemyIds:any[]=[];
       if(model==='simultaneous'&&enemies.length)enemyIds=[enemies[(combat.round-1)%enemies.length].id];
       if(model==='side_based'&&roundAdvance)enemyIds=enemies.map((item:any)=>item.id);
       if(model==='individual_initiative'){const order=participants.filter((item:any)=>item.status==='active'),actorIndex=order.findIndex((item:any)=>item.id===actor.id);nextPlayer=null;for(let step=1;step<=order.length;step++){const candidate=order[(actorIndex+step)%order.length];if(candidate.team==='player'){nextPlayer=candidate;roundAdvance=(actorIndex+step)>=order.length;break;}enemyIds.push(candidate.id);}}
-      for(const enemyId of enemyIds){combat=await resolveEnemyTurn(base44,combat,enemyId,players.map((item:any)=>item.id),encounter,rules,`${requestId}:enemy:${enemyId}`);combat=await conclude(base44,combat,character);if(combat.state!=='AWAITING_ACTIONS')break;}
+      for(const enemyId of enemyIds){combat=await resolveEnemyTurn(base44,combat,enemyId,players.map((item:any)=>item.id),encounter,rules,`${requestId}:enemy:${enemyId}`);combat=await conclude(base44,combat,combatOwner);if(combat.state!=='AWAITING_ACTIONS')break;}
       if(combat.state==='AWAITING_ACTIONS'){participants=await base44.asServiceRole.entities.CombatParticipant.filter({combat_instance_id:combat.id},'-initiative',30);players=participants.filter((item:any)=>item.team==='player'&&item.status==='active');nextPlayer=players.find((item:any)=>item.id===nextPlayer?.id)||players[0];combat=await base44.asServiceRole.entities.CombatInstance.update(combat.id,{round:combat.round+(roundAdvance?1:0),active_participant_id:nextPlayer.id,version:combat.version+1});}
     }
     return Response.json(await loadState(base44, character));
   }
   if (body.command === 'COMPLETE_COMBAT') {
-    const combat = await base44.asServiceRole.entities.CombatInstance.get(body.combatId);
-    if (combat.character_id !== character.id || !['VICTORY','DEFEAT','ESCAPED'].includes(combat.state)) return Response.json({ error: 'Combat cannot be closed.' }, { status: 422 });
+    const combat = await base44.asServiceRole.entities.CombatInstance.get(body.combatId),partyContext=await getPartyContext(base44,character),canControl=combat.character_id===character.id||Boolean(combat.party_id&&partyContext.party?.id===combat.party_id);
+    if (!canControl || !['VICTORY','DEFEAT','ESCAPED'].includes(combat.state)) return Response.json({ error: 'Combat cannot be closed.' }, { status: 422 });
     await base44.asServiceRole.entities.CombatInstance.update(combat.id, { state: 'COMPLETED', version: combat.version + 1 });
     await base44.asServiceRole.entities.ActiveEffect.deleteMany({combat_instance_id:combat.id,target_type:'combat_participant'});
     if(combat.party_id){const party=await base44.asServiceRole.entities.Party.get(combat.party_id);if(party.state!=='active')await base44.asServiceRole.entities.Party.update(party.id,{state:'active',version:party.version+1});}
