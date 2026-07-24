@@ -1,5 +1,5 @@
 {
-  "name": "Relationship",
+  "name": "NPCMemory",
   "type": "object",
   "properties": {
     "game_id": {
@@ -11,35 +11,49 @@
     "content_version": {
       "type": "string"
     },
-    "character_id": {
-      "type": "string"
-    },
     "npc_instance_id": {
       "type": "string"
     },
-    "source_ref": {
+    "subject_ref": {
       "type": "object",
       "additionalProperties": true
     },
-    "target_ref": {
+    "memory_key": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "facts": {
       "type": "object",
       "additionalProperties": true
     },
-    "values": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "number"
-      }
-    },
-    "tags": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "last_changed_minute": {
+    "salience": {
       "type": "number",
       "minimum": 0
+    },
+    "valence": {
+      "type": "number"
+    },
+    "remembered_minute": {
+      "type": "number",
+      "minimum": 0
+    },
+    "decays_minute": {
+      "type": "number",
+      "minimum": 0
+    },
+    "source_event_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "faded",
+        "suppressed"
+      ],
+      "default": "active"
     },
     "version": {
       "type": "number",
@@ -48,10 +62,16 @@
   },
   "required": [
     "game_id",
+    "world_instance_id",
     "content_version",
-    "character_id",
     "npc_instance_id",
-    "values"
+    "subject_ref",
+    "memory_key",
+    "summary",
+    "salience",
+    "remembered_minute",
+    "status",
+    "version"
   ],
   "rls": {
     "read": {

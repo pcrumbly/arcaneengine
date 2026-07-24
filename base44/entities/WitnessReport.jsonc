@@ -1,5 +1,5 @@
 {
-  "name": "Relationship",
+  "name": "WitnessReport",
   "type": "object",
   "properties": {
     "game_id": {
@@ -11,35 +11,44 @@
     "content_version": {
       "type": "string"
     },
-    "character_id": {
+    "incident_id": {
       "type": "string"
     },
-    "npc_instance_id": {
-      "type": "string"
-    },
-    "source_ref": {
+    "witness_ref": {
       "type": "object",
       "additionalProperties": true
     },
-    "target_ref": {
+    "reliability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "statement": {
       "type": "object",
       "additionalProperties": true
     },
-    "values": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "number"
-      }
+    "reported_to_faction_key": {
+      "type": "string"
     },
-    "tags": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+    "status": {
+      "type": "string",
+      "enum": [
+        "observed",
+        "reported",
+        "dismissed"
+      ],
+      "default": "observed"
     },
-    "last_changed_minute": {
+    "observed_minute": {
       "type": "number",
       "minimum": 0
+    },
+    "reported_minute": {
+      "type": "number",
+      "minimum": 0
+    },
+    "source_event_id": {
+      "type": "string"
     },
     "version": {
       "type": "number",
@@ -48,10 +57,15 @@
   },
   "required": [
     "game_id",
+    "world_instance_id",
     "content_version",
-    "character_id",
-    "npc_instance_id",
-    "values"
+    "incident_id",
+    "witness_ref",
+    "reliability",
+    "statement",
+    "status",
+    "observed_minute",
+    "version"
   ],
   "rls": {
     "read": {

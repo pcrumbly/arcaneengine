@@ -1,5 +1,6 @@
 import { evaluateCondition, resolveDerivedCharacterValues } from './rules.ts';
 import { applyCharacterTransaction, applySkillRankTransaction } from './economy.ts';
+import { loadSocialContext,publicSocialContext } from './socialSimulation.ts';
 async function capabilityData(base44:any,character:any){
   const [definitions,records,abilities,items,loadouts]=await Promise.all([
     base44.asServiceRole.entities.SkillDefinition.filter({game_id:character.game_id,content_version:character.content_version},'name',200),
@@ -32,9 +33,9 @@ async function loadProfile(base44:any,character:any){
     base44.asServiceRole.entities.ItemInstance.filter({character_id:character.id},'-updated_date',500),
     base44.asServiceRole.entities.FormulaDefinition.filter({game_id:character.game_id,content_version:character.content_version},'name',200)
   ]);
-  const equipped=items.filter((item:any)=>item.equipped_slot),itemDefinitions=await Promise.all(equipped.map((item:any)=>base44.asServiceRole.entities.ItemDefinition.get(item.definition_id)));
+  const equipped=items.filter((item:any)=>item.equipped_slot),[itemDefinitions,social]=await Promise.all([Promise.all(equipped.map((item:any)=>base44.asServiceRole.entities.ItemDefinition.get(item.definition_id))),loadSocialContext(base44,character)]);
   const expiredEffects=effects.filter((effect:any)=>effect.expires_at&&new Date(effect.expires_at).getTime()<=Date.now());if(expiredEffects.length)await base44.asServiceRole.entities.ActiveEffect.deleteMany({id:{'$in':expiredEffects.map((effect:any)=>effect.id)}});const resolvedEffects=effects.filter((effect:any)=>!expiredEffects.some((expired:any)=>expired.id===effect.id)).map((effect:any)=>({...effect,definition:statusDefinitions.find((definition:any)=>definition.key===effect.status_key)||null})),resolvedEquipment=equipped.map((item:any,index:number)=>({...item,definition:itemDefinitions[index]}));
-  return {character,attributeDefinitions,derivedValues:resolveDerivedCharacterValues(character,formulas,resolvedEquipment,resolvedEffects),effects:resolvedEffects,skills:skills.map((record:any)=>({...record,definition:skillDefinitions.find((definition:any)=>definition.id===record.skill_definition_id)||null})),equipment:resolvedEquipment};
+  return {character,attributeDefinitions,derivedValues:resolveDerivedCharacterValues(character,formulas,resolvedEquipment,resolvedEffects),effects:resolvedEffects,skills:skills.map((record:any)=>({...record,definition:skillDefinitions.find((definition:any)=>definition.id===record.skill_definition_id)||null})),equipment:resolvedEquipment,social:publicSocialContext(social)};
 }
 async function validateLoadout(base44:any,character:any,values:any){
   const data=await capabilityData(base44,character),unlocked=new Set(data.unlockedIds),items=new Map(data.inventory.map((item:any)=>[item.id,item])),assignedIds=Object.values(values.equipment_assignments||{});

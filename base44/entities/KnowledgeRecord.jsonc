@@ -1,0 +1,107 @@
+{
+  "name": "KnowledgeRecord",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "world_instance_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "knower_type": {
+      "type": "string"
+    },
+    "knower_id": {
+      "type": "string"
+    },
+    "proposition_key": {
+      "type": "string"
+    },
+    "subject_ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "believed_value": {
+      "type": [
+        "object",
+        "string",
+        "number",
+        "boolean",
+        "array",
+        "null"
+      ]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "veracity": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "true",
+        "false",
+        "mixed"
+      ],
+      "default": "unknown"
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "learned_minute": {
+      "type": "number",
+      "minimum": 0
+    },
+    "expires_minute": {
+      "type": "number",
+      "minimum": 0
+    },
+    "source_event_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "world_instance_id",
+    "content_version",
+    "knower_type",
+    "knower_id",
+    "proposition_key",
+    "believed_value",
+    "confidence",
+    "veracity",
+    "learned_minute",
+    "version"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

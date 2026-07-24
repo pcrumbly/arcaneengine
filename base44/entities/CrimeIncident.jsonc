@@ -1,0 +1,98 @@
+{
+  "name": "CrimeIncident",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "world_instance_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "crime_definition_id": {
+      "type": "string"
+    },
+    "crime_key": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "jurisdiction_key": {
+      "type": "string"
+    },
+    "location_id": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "number",
+      "minimum": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "unreported",
+        "reported",
+        "adjudicated",
+        "expired"
+      ],
+      "default": "unreported"
+    },
+    "committed_minute": {
+      "type": "number",
+      "minimum": 0
+    },
+    "expires_minute": {
+      "type": "number",
+      "minimum": 0
+    },
+    "source_event_id": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "world_instance_id",
+    "content_version",
+    "crime_definition_id",
+    "crime_key",
+    "character_id",
+    "jurisdiction_key",
+    "severity",
+    "status",
+    "committed_minute",
+    "request_id",
+    "version"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

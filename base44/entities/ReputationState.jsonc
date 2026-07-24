@@ -1,5 +1,5 @@
 {
-  "name": "Relationship",
+  "name": "ReputationState",
   "type": "object",
   "properties": {
     "game_id": {
@@ -14,16 +14,8 @@
     "character_id": {
       "type": "string"
     },
-    "npc_instance_id": {
+    "faction_key": {
       "type": "string"
-    },
-    "source_ref": {
-      "type": "object",
-      "additionalProperties": true
-    },
-    "target_ref": {
-      "type": "object",
-      "additionalProperties": true
     },
     "values": {
       "type": "object",
@@ -31,15 +23,8 @@
         "type": "number"
       }
     },
-    "tags": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "last_changed_minute": {
-      "type": "number",
-      "minimum": 0
+    "last_ledger_id": {
+      "type": "string"
     },
     "version": {
       "type": "number",
@@ -48,10 +33,12 @@
   },
   "required": [
     "game_id",
+    "world_instance_id",
     "content_version",
     "character_id",
-    "npc_instance_id",
-    "values"
+    "faction_key",
+    "values",
+    "version"
   ],
   "rls": {
     "read": {

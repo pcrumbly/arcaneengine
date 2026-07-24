@@ -1,5 +1,5 @@
 {
-  "name": "Relationship",
+  "name": "LegalStanding",
   "type": "object",
   "properties": {
     "game_id": {
@@ -14,24 +14,31 @@
     "character_id": {
       "type": "string"
     },
-    "npc_instance_id": {
+    "jurisdiction_key": {
       "type": "string"
     },
-    "source_ref": {
-      "type": "object",
-      "additionalProperties": true
+    "status": {
+      "type": "string",
+      "enum": [
+        "clear",
+        "suspected",
+        "wanted",
+        "convicted",
+        "pardoned"
+      ],
+      "default": "clear"
     },
-    "target_ref": {
-      "type": "object",
-      "additionalProperties": true
+    "severity": {
+      "type": "number",
+      "minimum": 0,
+      "default": 0
     },
-    "values": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "number"
-      }
+    "bounty": {
+      "type": "number",
+      "minimum": 0,
+      "default": 0
     },
-    "tags": {
+    "open_incident_ids": {
       "type": "array",
       "items": {
         "type": "string"
@@ -48,10 +55,16 @@
   },
   "required": [
     "game_id",
+    "world_instance_id",
     "content_version",
     "character_id",
-    "npc_instance_id",
-    "values"
+    "jurisdiction_key",
+    "status",
+    "severity",
+    "bounty",
+    "open_incident_ids",
+    "last_changed_minute",
+    "version"
   ],
   "rls": {
     "read": {

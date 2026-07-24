@@ -1,57 +1,58 @@
 {
-  "name": "Relationship",
+  "name": "KnowledgeDefinition",
   "type": "object",
   "properties": {
     "game_id": {
       "type": "string"
     },
-    "world_instance_id": {
-      "type": "string"
-    },
     "content_version": {
       "type": "string"
     },
-    "character_id": {
+    "key": {
       "type": "string"
     },
-    "npc_instance_id": {
+    "name": {
       "type": "string"
     },
-    "source_ref": {
+    "description": {
+      "type": "string"
+    },
+    "subject_ref": {
       "type": "object",
       "additionalProperties": true
     },
-    "target_ref": {
-      "type": "object",
-      "additionalProperties": true
+    "canonical_value": {
+      "type": [
+        "object",
+        "string",
+        "number",
+        "boolean",
+        "array",
+        "null"
+      ]
     },
-    "values": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "number"
-      }
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "public",
+        "discoverable",
+        "secret"
+      ],
+      "default": "discoverable"
     },
     "tags": {
       "type": "array",
       "items": {
         "type": "string"
       }
-    },
-    "last_changed_minute": {
-      "type": "number",
-      "minimum": 0
-    },
-    "version": {
-      "type": "number",
-      "default": 1
     }
   },
   "required": [
     "game_id",
     "content_version",
-    "character_id",
-    "npc_instance_id",
-    "values"
+    "key",
+    "name",
+    "canonical_value"
   ],
   "rls": {
     "read": {
