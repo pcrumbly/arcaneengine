@@ -40,6 +40,21 @@
       "type": "number",
       "minimum": 1
     },
+    "snapshot_revision": {
+      "type": "number",
+      "minimum": 1
+    },
+    "snapshot_record_count": {
+      "type": "number",
+      "minimum": 0
+    },
+    "snapshot_hash": {
+      "type": "string"
+    },
+    "snapshot_compiled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "lock_token": {
       "type": "string"
     },

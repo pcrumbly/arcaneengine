@@ -1,0 +1,63 @@
+{
+  "name": "ContentPackEntry",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "release_id": {
+      "type": "string"
+    },
+    "pack_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "content_type": {
+      "type": "string"
+    },
+    "content_key": {
+      "type": "string"
+    },
+    "record_id": {
+      "type": "string"
+    },
+    "content_ref": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "game_id",
+    "release_id",
+    "pack_id",
+    "content_version",
+    "content_type",
+    "content_key",
+    "record_id",
+    "content_ref"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

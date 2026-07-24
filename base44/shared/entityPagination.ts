@@ -1,0 +1,3 @@
+export async function filterAll(entity:any,query:any={},sort='created_date',pageSize=200){const rows:any[]=[];let skip=0;while(true){const page=await entity.filter(query,sort,pageSize,skip);rows.push(...page);if(page.length<pageSize)break;skip+=page.length;}return rows;}
+export async function listAll(entity:any,sort='created_date',pageSize=200){const rows:any[]=[];let skip=0;while(true){const page=await entity.list(sort,pageSize,skip);rows.push(...page);if(page.length<pageSize)break;skip+=page.length;}return rows;}
+export function pageRequest(body:any){const limit=Math.min(100,Math.max(1,Number(body.limit||50))),skip=Math.max(0,Number(body.skip||0));return {limit,skip};}

@@ -1,0 +1,77 @@
+{
+  "name": "PublishedContentSnapshot",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "release_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "snapshot_revision": {
+      "type": "number",
+      "minimum": 1
+    },
+    "content_type": {
+      "type": "string"
+    },
+    "content_key": {
+      "type": "string"
+    },
+    "pack_id": {
+      "type": "string"
+    },
+    "content_ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "payload_hash": {
+      "type": "string"
+    },
+    "compiled_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "game_id",
+    "release_id",
+    "content_version",
+    "snapshot_revision",
+    "content_type",
+    "content_key",
+    "content_ref",
+    "payload",
+    "payload_hash",
+    "compiled_at"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

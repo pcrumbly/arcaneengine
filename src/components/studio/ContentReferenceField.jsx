@@ -1,9 +1,10 @@
-import { useMemo,useState } from 'react';
+import { useEffect,useMemo,useState } from 'react';
 import { Search,X } from 'lucide-react';
 const title=item=>item.name||item.label||item.key||item.id;
-export default function ContentReferenceField({field,value,onChange,options=[]}){
- const [query,setQuery]=useState(''),multiple=field.type==='references',selected=multiple?(Array.isArray(value)?value:[]):value||'';
- const filtered=useMemo(()=>options.filter(item=>`${title(item)} ${item.key||''}`.toLowerCase().includes(query.toLowerCase())),[options,query]);
+export default function ContentReferenceField({field,value,onChange,options=[],searchOptions}){
+ const [query,setQuery]=useState(''),[remote,setRemote]=useState([]),multiple=field.type==='references',selected=multiple?(Array.isArray(value)?value:[]):value||'';
+ useEffect(()=>{if(!query||!searchOptions){setRemote([]);return}const timer=setTimeout(()=>searchOptions(query).then(setRemote),200);return()=>clearTimeout(timer)},[query,searchOptions]);
+ const filtered=useMemo(()=>{const source=query&&remote.length?remote:options;return source.filter(item=>`${title(item)} ${item.key||''}`.toLowerCase().includes(query.toLowerCase()))},[options,remote,query]);
  const add=id=>{if(!id)return;onChange(multiple?[...new Set([...selected,id])]:id);setQuery('')};
  return <div className="text-sm text-slate-300"><span>{field.label}</span>{multiple&&selected.length>0&&<div className="mt-2 flex flex-wrap gap-1">{selected.map(id=>{const item=options.find(option=>option.id===id);return <span key={id} className="flex items-center gap-1 rounded bg-runtime-accent/10 px-2 py-1 text-xs text-runtime-accent">{item?title(item):id}<button type="button" onClick={()=>onChange(selected.filter(value=>value!==id))} aria-label={`Remove ${item?title(item):id}`}><X size={12}/></button></span>})}</div>}<label className="relative mt-1.5 block"><Search size={14} className="absolute left-3 top-3 text-slate-500"/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder={`Search ${field.label.toLowerCase()}`} className="w-full rounded border border-white/10 bg-runtime py-2 pl-9 pr-3 text-sm"/></label><select required={field.required&&!multiple} value={multiple?'':selected} onChange={event=>add(event.target.value)} className="mt-1.5 w-full rounded border border-white/10 bg-runtime px-3 py-2 text-sm"><option value="">{multiple?'Add selection…':'Select…'}</option>{filtered.map(item=><option key={item.id} value={item.id}>{title(item)}{item.key?` · ${item.key}`:''}</option>)}</select>{!options.length&&<small className="text-slate-600">Create linked content in this release first.</small>}</div>;
 }

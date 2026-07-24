@@ -12,18 +12,22 @@ import InteractionTargetingEditor from '@/components/studio/InteractionTargeting
 import InteractionSourceEditor from '@/components/studio/InteractionSourceEditor';
 import InteractionSkillCheckEditor from '@/components/studio/InteractionSkillCheckEditor';
 import JsonValueField from '@/components/studio/JsonValueField';
-export default function ContentField({field,value,onChange,references={},allValues={}}){
+import TagEditor from '@/components/studio/TagEditor';
+import FormulaExpressionEditor from '@/components/studio/FormulaExpressionEditor';
+export default function ContentField({field,value,onChange,references={},allValues={},referenceSearch}){
   const common={required:field.required,value:value??'',onChange:e=>onChange(field.type==='number'?(e.target.value===''?'':Number(e.target.value)):e.target.value),className:'mt-2 w-full rounded-lg border border-slate-700 bg-[#111d31] px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:border-cyan-400'};
   if(field.type==='questGraph')return <QuestGraphEditor value={value} onChange={onChange}/>;
   if(field.type==='dialogueGraph')return <SynchronizedJsonEditor label="Dialogue nodes" value={value||[]} emptyValue={[]} onChange={onChange}><DialogueGraphEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
   if(field.type==='dialogueStart')return <label className="block text-sm text-slate-300">{field.label}<select {...common}><option value="">Select starting node…</option>{(allValues.nodes||[]).map(node=><option key={node.key} value={node.key}>{node.text?.slice(0,60)||node.key} · {node.key}</option>)}</select></label>;
   if(field.type==='npcInteractions')return <NpcInteractionsEditor value={value} onChange={onChange} references={references}/>;
-  if(field.type==='reference'||field.type==='references')return <ContentReferenceField field={field} value={value} onChange={onChange} options={references[field.referenceType]||[]}/>;
+  if(field.type==='reference'||field.type==='references')return <ContentReferenceField field={field} value={value} onChange={onChange} options={references[field.referenceType]||[]} searchOptions={referenceSearch?query=>referenceSearch(field.referenceType,query):undefined}/>;
   if(field.type==='rewards')return <RewardEditor value={value} onChange={onChange} items={references.ItemDefinition||[]} mode={field.rewardMode}/>;
   if(field.type==='worldEventTrigger')return <SynchronizedJsonEditor label="Trigger" value={value||{}} emptyValue={{}} onChange={onChange}><WorldEventTriggerEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
-  if(field.type==='worldEventConditions')return <SynchronizedJsonEditor label="Conditions" value={value||{}} emptyValue={{}} onChange={onChange}><WorldEventConditionsEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
-  if(field.type==='worldEventEffects')return <SynchronizedJsonEditor label="Effects" value={value||[]} emptyValue={[]} onChange={onChange}><WorldEventEffectsEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
-  if(field.type==='worldEventEmissions')return <SynchronizedJsonEditor label="Emitted events" value={value||[]} emptyValue={[]} onChange={onChange}><WorldEventEmissionsEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
+  if(field.type==='formulaExpression')return <FormulaExpressionEditor value={value} onChange={onChange}/>;
+  if(field.type==='tags')return <TagEditor label={field.label} value={value} options={references.TagDefinition||[]} onChange={onChange}/>;
+  if(field.type==='worldEventConditions'||field.type==='conditions')return <SynchronizedJsonEditor label="Conditions" value={value||{}} emptyValue={{}} onChange={onChange}><WorldEventConditionsEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
+  if(field.type==='worldEventEffects'||field.type==='effects')return <SynchronizedJsonEditor label="Effects" value={value||[]} emptyValue={[]} onChange={onChange}><WorldEventEffectsEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
+  if(field.type==='worldEventEmissions'||field.type==='events')return <SynchronizedJsonEditor label="Emitted events" value={value||[]} emptyValue={[]} onChange={onChange}><WorldEventEmissionsEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
   if(field.type==='interactionTargeting')return <SynchronizedJsonEditor label={field.label} value={value||{}} emptyValue={{}} onChange={onChange}><InteractionTargetingEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
   if(field.type==='interactionSource')return <SynchronizedJsonEditor label={field.label} value={value||{}} emptyValue={{}} onChange={onChange}><InteractionSourceEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
   if(field.type==='interactionSkillCheck')return <SynchronizedJsonEditor label={field.label} value={value||{}} emptyValue={{}} onChange={onChange}><InteractionSkillCheckEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
@@ -31,6 +35,5 @@ export default function ContentField({field,value,onChange,references={},allValu
   if(field.type==='json')return <JsonValueField label={field.label} value={value} emptyValue={JSON.parse(field.empty||'{}')} onChange={onChange}/>;
   if(field.type==='textarea')return <label className="block text-sm text-slate-300">{field.label}<textarea {...common} rows={3}/></label>;
   if(field.type==='select')return <label className="block text-sm text-slate-300">{field.label}<select {...common}><option value="">Select…</option>{field.options.map(option=><option key={option}>{option}</option>)}</select></label>;
-  if(field.type==='tags')return <label className="block text-sm font-medium text-slate-300">{field.label}<input {...common} value={(Array.isArray(value)?value:[]).join(', ')} onChange={event=>onChange(event.target.value.split(',').map(entry=>entry.trim()).filter(Boolean))}/><small className="mt-1 block text-slate-600">Comma-separated values</small></label>;
   return <label className="block text-sm font-medium text-slate-300">{field.label}{field.required&&<span className="ml-1 text-cyan-400">*</span>}<input {...common} type={field.type==='number'?'number':'text'}/></label>;
 }

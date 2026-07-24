@@ -61,7 +61,7 @@ async function studioOverview(base44:any,user:any){
 
 export async function handleRuntimeCommand(base44:any,user:any,body:any,requestId:string){
   const command=body.command;
-  if(command==='STUDIO_OVERVIEW')return user.role==='admin'?studioOverview(base44,user):Response.json({error:'Forbidden'},{status:403});
+  if(command==='STUDIO_OVERVIEW')return studioOverview(base44,user);
   if(command==='CREATE_CHARACTER'){
     const game=await base44.asServiceRole.entities.Game.get(body.gameId),release=(await base44.asServiceRole.entities.ContentRelease.filter({game_id:game.id,status:'published'},'-published_at',1))[0];
     if(!release)return Response.json({error:'This game has no published content.'},{status:409});

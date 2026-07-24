@@ -1,0 +1,7 @@
+import { useState } from 'react';
+import { Plus, X } from 'lucide-react';
+export default function TagEditor({label,value=[],options=[],onChange}){
+  const [tag,setTag]=useState(''),tags=Array.isArray(value)?value:[],available=options.filter(option=>!tags.includes(option.key));
+  const add=()=>{const next=tag.trim();if(next&&!tags.includes(next))onChange([...tags,next]);setTag('')};
+  return <div className="text-sm text-slate-300"><span>{label}</span><div className="mt-2 flex min-h-8 flex-wrap gap-1">{tags.map(item=><span key={item} className="flex items-center gap-1 rounded bg-runtime-accent/10 px-2 py-1 text-xs text-runtime-accent">{item}<button type="button" onClick={()=>onChange(tags.filter(current=>current!==item))} aria-label={`Remove ${item}`}><X size={12}/></button></span>)}</div><div className="mt-2 flex gap-2"><input list={`${label}-tags`} value={tag} onChange={event=>setTag(event.target.value)} onKeyDown={event=>{if(event.key==='Enter'){event.preventDefault();add()}}} placeholder="Namespaced tag" className="min-w-0 flex-1 rounded border border-white/10 bg-runtime px-3 py-2 text-sm"/><datalist id={`${label}-tags`}>{available.map(option=><option key={option.id} value={option.key}>{option.name}</option>)}</datalist><button type="button" onClick={add} className="rounded border border-runtime-accent/30 px-3 text-runtime-accent" aria-label="Add tag"><Plus size={15}/></button></div></div>;
+}

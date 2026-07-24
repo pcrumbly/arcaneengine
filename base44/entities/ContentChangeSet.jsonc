@@ -1,0 +1,90 @@
+{
+  "name": "ContentChangeSet",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "release_id": {
+      "type": "string"
+    },
+    "workspace_revision": {
+      "type": "number",
+      "minimum": 1
+    },
+    "operation_id": {
+      "type": "string"
+    },
+    "actor_user_id": {
+      "type": "string"
+    },
+    "operation": {
+      "type": "string",
+      "enum": [
+        "create",
+        "update",
+        "delete",
+        "rename",
+        "replace",
+        "move"
+      ]
+    },
+    "content_type": {
+      "type": "string"
+    },
+    "content_key": {
+      "type": "string"
+    },
+    "record_id": {
+      "type": "string"
+    },
+    "pack_id": {
+      "type": "string"
+    },
+    "before": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "after": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "game_id",
+    "release_id",
+    "workspace_revision",
+    "operation_id",
+    "actor_user_id",
+    "operation",
+    "content_type",
+    "content_key",
+    "occurred_at"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
