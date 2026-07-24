@@ -1,0 +1,86 @@
+{
+  "name": "EntityTag",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "target_type": {
+      "type": "string"
+    },
+    "target_id": {
+      "type": "string"
+    },
+    "tag": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "runtime",
+        "permanent"
+      ],
+      "default": "runtime"
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "taxonomy",
+        "visible",
+        "hidden"
+      ],
+      "default": "taxonomy"
+    },
+    "source_type": {
+      "type": "string"
+    },
+    "source_id": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "target_type",
+    "target_id",
+    "tag",
+    "scope",
+    "visibility"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

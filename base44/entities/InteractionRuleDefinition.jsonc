@@ -1,0 +1,152 @@
+{
+  "name": "InteractionRuleDefinition",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "action_key": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "number",
+      "default": 0
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "exclusive_group": {
+      "type": "string"
+    },
+    "required_tags": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "any_tag_groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "subject",
+          "tags"
+        ]
+      }
+    },
+    "excluded_tags": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "conditions": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "unavailable_text": {
+      "type": "string"
+    },
+    "preview": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "success_effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "failure_effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "success_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "failure_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "key",
+    "name",
+    "action_key",
+    "label"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

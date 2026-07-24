@@ -1,0 +1,78 @@
+{
+  "name": "TagDefinition",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[a-z0-9][a-z0-9._-]*$"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "visible",
+        "hidden"
+      ],
+      "default": "visible"
+    },
+    "aliases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "deprecated": {
+      "type": "boolean",
+      "default": false
+    },
+    "replacement_tag": {
+      "type": "string"
+    },
+    "allowed_entity_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "key",
+    "name",
+    "visibility"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
