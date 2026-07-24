@@ -1,6 +1,6 @@
 import { createBasePack, resolveContentPackLayers } from './contentPacks.ts';
 import { requireGamePermission } from './authorization.ts';
-const contentTypes = ['TagDefinition','InteractionRuleDefinition','WeatherDefinition','LocationDefinition','Connection','NPCDefinition','NPCInstance','NPCPlacement','DialogueGraph','QuestDefinition','AchievementDefinition','ItemDefinition','AbilityDefinition','EncounterDefinition','AttributeDefinition','SkillDefinition','FormulaDefinition','EffectDefinition','StatusDefinition','LocalizationEntry','RuleExtensionDefinition','RuntimeModuleDefinition'];
+const contentTypes = ['TagDefinition','InteractionRuleDefinition','WeatherDefinition','WorldEventDefinition','LocationDefinition','Connection','NPCDefinition','NPCInstance','NPCPlacement','DialogueGraph','QuestDefinition','AchievementDefinition','ItemDefinition','AbilityDefinition','EncounterDefinition','AttributeDefinition','SkillDefinition','FormulaDefinition','EffectDefinition','StatusDefinition','LocalizationEntry','RuleExtensionDefinition','RuntimeModuleDefinition'];
 const reserved = new Set(['id','game_id','content_version','created_date','updated_date','created_by_id']);
 const gameFields = ['title','description','terminology','theme','enabled_modules','navigation','header_indicators','character_defaults','rules'];
 const clean = (values:any) => Object.fromEntries(Object.entries(values || {}).filter(([key]) => !reserved.has(key)));

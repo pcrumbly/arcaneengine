@@ -1,0 +1,129 @@
+{
+  "name": "WorldEventDefinition",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "priority": {
+      "type": "number",
+      "default": 0
+    },
+    "trigger": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "at_time",
+            "interval",
+            "weather_change",
+            "domain_event",
+            "random_check"
+          ]
+        },
+        "at_time": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "starts_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "interval_minutes": {
+          "type": "number",
+          "minimum": 1
+        },
+        "event_type": {
+          "type": "string"
+        },
+        "region_key": {
+          "type": "string"
+        },
+        "from_weather_key": {
+          "type": "string"
+        },
+        "to_weather_key": {
+          "type": "string"
+        },
+        "payload_matches": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "probability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "conditions": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "emitted_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "event_type": {
+            "type": "string"
+          },
+          "aggregate_type": {
+            "type": "string"
+          },
+          "aggregate_id": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "key",
+    "name",
+    "enabled",
+    "trigger"
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "name": "WorldEventExecution",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "definition_id": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "occurrence_key": {
+      "type": "string"
+    },
+    "trigger_type": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "processing",
+        "completed",
+        "skipped",
+        "failed"
+      ]
+    },
+    "world_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_event_id": {
+      "type": "string"
+    },
+    "outcomes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "emitted_event_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "error": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "triggered_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "definition_id",
+    "character_id",
+    "occurrence_key",
+    "trigger_type",
+    "status",
+    "version"
+  ]
+}
