@@ -1,7 +1,7 @@
 import { inventoryContainersFor } from './inventory.ts';
 
 const amount=(value:any)=>Math.max(1,Number(value||1));
-const rewardLabel=(reward:any)=>reward.type==='tag'?reward.key:`${amount(reward.amount)} ${reward.key}`;
+const rewardLabel=(reward:any,itemNames:Map<string,string>)=>{const key=reward.type==='item'?itemNames.get(reward.key)||reward.key:reward.key;if(reward.type==='tag')return `Tag: ${key}`;return `${amount(reward.amount)} ${key}`;};
 
 async function loadAchievementRows(base44:any,character:any){
   const [definitions,stored,quests,items,skills,combats,questDefs,itemDefs,skillDefs]=await Promise.all([
@@ -15,7 +15,7 @@ async function loadAchievementRows(base44:any,character:any){
     base44.asServiceRole.entities.ItemDefinition.filter({game_id:character.game_id,content_version:character.content_version},'name',300),
     base44.asServiceRole.entities.SkillDefinition.filter({game_id:character.game_id,content_version:character.content_version},'name',300)
   ]);
-  const questKey=new Map(questDefs.map((row:any)=>[row.id,row.key])),itemKey=new Map(itemDefs.map((row:any)=>[row.id,row.key])),skillKey=new Map(skillDefs.map((row:any)=>[row.id,row.key])),progressByDefinition=new Map(stored.map((row:any)=>[row.achievement_definition_id,row]));
+  const questKey=new Map(questDefs.map((row:any)=>[row.id,row.key])),itemKey=new Map(itemDefs.map((row:any)=>[row.id,row.key])),itemNames=new Map(itemDefs.map((row:any)=>[row.key,row.name])),skillKey=new Map(skillDefs.map((row:any)=>[row.id,row.key])),progressByDefinition=new Map(stored.map((row:any)=>[row.achievement_definition_id,row]));
   const readValue=(criterion:any)=>{const key=criterion.target_key;switch(criterion.type){
     case 'quest_completed':return quests.filter((row:any)=>row.state==='COMPLETED'&&(!key||questKey.get(row.definition_id)===key)).length;
     case 'item_quantity':return items.filter((row:any)=>!key||itemKey.get(row.definition_id)===key).reduce((sum:number,row:any)=>sum+Number(row.quantity||0),0);
@@ -31,7 +31,7 @@ async function loadAchievementRows(base44:any,character:any){
     if(!existing)progress=await base44.asServiceRole.entities.AchievementProgress.create({game_id:character.game_id,content_version:character.content_version,character_id:character.id,achievement_definition_id:definition.id,criteria_values:criteriaValues,percent,completed_at:completedAt,version:1});
     else if(JSON.stringify(existing.criteria_values)!==JSON.stringify(criteriaValues)||existing.percent!==percent||completedAt!==existing.completed_at)progress=await base44.asServiceRole.entities.AchievementProgress.update(existing.id,{criteria_values:criteriaValues,percent,completed_at:completedAt,version:existing.version+1});
     const hidden=definition.hidden&&!progress.completed_at;
-    rows.push({progress,definition:hidden?{id:definition.id,name:'Hidden achievement',description:'Complete its secret requirements to reveal it.',category:definition.category,hidden:true,points:definition.points,rewards:[]}:definition,criteria:criteria.map((criterion:any,index:number)=>({...criterion,current:values[index],target:amount(criterion.amount)})),reward_labels:(definition.rewards||[]).map(rewardLabel)});
+    rows.push({progress,definition:hidden?{id:definition.id,name:'Hidden achievement',description:'Complete its secret requirements to reveal it.',category:definition.category,hidden:true,points:definition.points,rewards:[]}:definition,criteria:criteria.map((criterion:any,index:number)=>({...criterion,current:values[index],target:amount(criterion.amount)})),reward_labels:(definition.rewards||[]).map((reward:any)=>rewardLabel(reward,itemNames))});
   }
   return {character,achievements:rows,summary:{total:rows.length,completed:rows.filter((row:any)=>row.progress.completed_at).length,claimed:rows.filter((row:any)=>row.progress.claimed_at).length,points:rows.filter((row:any)=>row.progress.completed_at).reduce((sum:number,row:any)=>sum+Number(row.definition.points||0),0)}};
 }
