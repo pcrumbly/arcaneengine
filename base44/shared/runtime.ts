@@ -43,11 +43,11 @@ async function loadQuests(base44:any,characterId:string){
 async function loadState(base44:any,user:any,characterId?:string){
   const characters=await base44.entities.Character.list('-updated_date',20),games=await base44.asServiceRole.entities.Game.filter({status:'published'},'title',20),selected=characters.find((item:any)=>item.id===characterId)||characters[0]||null;
   if(!selected)return {games,game:games[0]||null,characters,character:null,location:null,exits:[],npcs:[],activity:[]};
-  const game=games.find((item:any)=>item.id===selected.game_id)||null,location=await base44.asServiceRole.entities.LocationDefinition.get(selected.current_location_id);
+  const game=games.find((item:any)=>item.id===selected.game_id)||null,worldInstance=selected.world_instance_id?await base44.asServiceRole.entities.WorldInstance.get(selected.world_instance_id):await ensureWorldInstance(base44,selected.game_id,selected.content_version),location=await base44.asServiceRole.entities.LocationDefinition.get(selected.current_location_id);
   const [forwardLinks,reverseLinks]=await Promise.all([base44.asServiceRole.entities.Connection.filter({from_location_id:selected.current_location_id,content_version:selected.content_version,enabled:true},'label',30),base44.asServiceRole.entities.Connection.filter({to_location_id:selected.current_location_id,content_version:selected.content_version,enabled:true,one_way:false},'label',30)]);
   const reverseOnly=reverseLinks.filter((link:any)=>!forwardLinks.some((forward:any)=>forward.to_location_id===link.from_location_id)),links=[...forwardLinks,...reverseOnly.map((link:any)=>({...link,to_location_id:link.from_location_id,from_location_id:selected.current_location_id,reverse:true}))],destinationIds=[...new Set(links.map((link:any)=>link.to_location_id))],destinations=destinationIds.length?await base44.asServiceRole.entities.LocationDefinition.filter({id:{'$in':destinationIds}},'name',30):[],exits=links.map((link:any)=>({...link,destination:destinations.find((destination:any)=>destination.id===link.to_location_id)||null}));
   const [npcs,activity]=await Promise.all([loadVisibleNpcs(base44,selected),base44.asServiceRole.entities.AuditEvent.filter({actor_user_id:user.id,character_id:selected.id,result:'accepted'},'-occurred_at',8)]);
-  return {games,game,characters,character:selected,location,exits,npcs,activity};
+  return {games,game,worldInstance,characters,character:selected,location,exits,npcs,activity};
 }
 
 async function studioOverview(base44:any,user:any){

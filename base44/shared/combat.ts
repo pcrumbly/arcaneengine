@@ -5,8 +5,9 @@ import { publishQuestEvent } from './quests.ts';
 import { grantItemReward } from './inventory.ts';
 import { applyCharacterTransaction } from './economy.ts';
 import { configuredCombatOutcome, resolveConfiguredTargets } from './combatConfiguration.ts';
-import { randomFloatAt, seedFromString } from './deterministic.ts';
-import { assertDefinitionInstance } from './simulationContracts.ts';
+import { deriveSeed, randomFloatAt } from './deterministic.ts';
+import { assertDefinitionInstance, entityRef } from './simulationContracts.ts';
+import { worldInstanceForCharacter } from './worldInstances.ts';
 const LIVE_STATES = ['CREATED','AWAITING_PARTICIPANTS','ROUND_START','AWAITING_ACTIONS','RESOLVING_ACTIONS','ROUND_END'];
 
 async function loadState(base44:any, character:any) {
@@ -111,8 +112,8 @@ export async function handleCombatCommand(base44:any, user:any, body:any, reques
     if (!fallbackIds.length) return Response.json({ error: 'No combat abilities are configured for this character.' }, { status: 422 });
     const partyCharacters=partyContext.party?partyContext.members.filter((member:any)=>member.readiness==='ready'&&member.character.current_location_id===character.current_location_id&&member.character.content_version===character.content_version).map((member:any)=>member.character):[character];
     const playerRows:any[]=[];for(let index=0;index<partyCharacters.length;index++){const member=partyCharacters[index],capabilities=await resolveCharacterCapabilities(base44,member),abilityIds=capabilities.activeAbilityIds;playerRows.push({game_id:character.game_id,character_id:member.id,team:'player',name:member.name,resources:{...(member.resources||{})},maximum_resources:{...(member.resources||{})},attributes:member.attributes||{},ability_ids:abilityIds,cooldowns:{},status:'active',initiative:100-index,version:1});}
-    const simulationSeed=user.role==='admin'&&character.is_test_character&&Number.isInteger(Number(body.seed))?Number(body.seed)>>>0:null;
-    let combat = await base44.asServiceRole.entities.CombatInstance.create({ game_id: character.game_id, content_version: character.content_version, character_id: character.id, party_id:partyContext.party?.id||null, encounter_definition_id: encounter.id, state: 'CREATED', round: 1, seed: simulationSeed??seedFromString(requestId), rng_cursor: 0, rewards_granted: false, version: 1 });
+    const simulationSeed=user.role==='admin'&&character.is_test_character&&Number.isInteger(Number(body.seed))?Number(body.seed)>>>0:null,worldInstance=await worldInstanceForCharacter(base44,character);
+    let combat = await base44.asServiceRole.entities.CombatInstance.create({ game_id: character.game_id, world_instance_id:worldInstance.id, content_version: character.content_version, character_id: character.id, party_id:partyContext.party?.id||null, encounter_definition_id: encounter.id, definition_ref:entityRef('EncounterDefinition',encounter.id,encounter.content_version), state: 'CREATED', round: 1, seed: simulationSeed??deriveSeed(worldInstance.seed,`combat:${requestId}:${encounter.id}`), rng_cursor: 0, rewards_granted: false, version: 1 });
     assertDefinitionInstance(encounter,combat,'EncounterDefinition','encounter_definition_id');
     combat=await base44.asServiceRole.entities.CombatInstance.update(combat.id,{state:'AWAITING_PARTICIPANTS',version:2});
     if(partyContext.party)await base44.asServiceRole.entities.Party.update(partyContext.party.id,{state:'in_combat',version:partyContext.party.version+1});
