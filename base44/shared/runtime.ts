@@ -4,6 +4,7 @@ import { isMovementLocked, movePartyWithLeader } from './party.ts';
 import { claimQuestReward, createObjectiveRows, publishQuestEvent, refreshQuestProgress, selectQuestBranch } from './quests.ts';
 import { handleInventoryCommand, inventoryContainersFor } from './inventory.ts';
 import { authorizedGameIds } from './authorization.ts';
+import { handleContextualActionCommand } from './contextualActions.ts';
 
 async function loadInventory(base44:any,user:any,characterId:string){
   const character=await base44.entities.Character.get(characterId);
@@ -65,6 +66,7 @@ export async function handleRuntimeCommand(base44:any,user:any,body:any,requestI
     const container=await base44.asServiceRole.entities.Container.create({game_id:game.id,content_version:release.version,owner_type:'character',owner_id:character.id,character_id:character.id,name:'Carried items',container_type:'character',capacity:Number(rules.inventory_capacity||0),version:1}),starters=await base44.asServiceRole.entities.ItemDefinition.filter({game_id:game.id,content_version:release.version,tags:{'$in':['starter']}},'name',20);
     if(starters.length)await base44.asServiceRole.entities.ItemInstance.bulkCreate(starters.map((definition:any)=>({game_id:game.id,content_version:release.version,definition_id:definition.id,container_id:container.id,owner_type:'character',owner_id:character.id,character_id:character.id,quantity:definition.stack_limit>1?Math.min(definition.stack_limit,Number(rules.starter_stack_quantity||1)):1,quality:'standard',bound_state:'unbound',custom_properties:{},applied_modifications:[],acquired_at:new Date().toISOString(),version:1})));
   }
+  if(['GET_CONTEXTUAL_ACTIONS','EXECUTE_CONTEXTUAL_ACTION'].includes(command))return await handleContextualActionCommand(base44,user,body,requestId);
   if(command==='GET_INVENTORY')return Response.json(await loadInventory(base44,user,body.characterId));
   if(['SPLIT_ITEM','MERGE_ITEM','TRANSFER_ITEM','BULK_TRANSFER_ITEMS','COLLECT_LOOT'].includes(command)){const character=await base44.entities.Character.get(body.characterId),result=await handleInventoryCommand(base44,user,character,body,requestId);if(result)return result;return Response.json(await loadInventory(base44,user,character.id));}
   if(command==='GET_QUESTS')return Response.json(await loadQuests(base44,body.characterId));

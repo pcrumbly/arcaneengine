@@ -1,0 +1,13 @@
+import { useCallback, useEffect, useState } from 'react';
+import { LoaderCircle, Sparkles } from 'lucide-react';
+import { invokeRuntimeCommand } from '@/lib/runtimeCommandClient';
+
+export default function ContextualActions({character,targetType,targetId,onExecuted}){
+  const [actions,setActions]=useState([]),[busy,setBusy]=useState(''),[error,setError]=useState('');
+  const load=useCallback(async()=>{if(!character?.id||!targetId)return;setBusy('load');setError('');try{const {data}=await invokeRuntimeCommand({command:'GET_CONTEXTUAL_ACTIONS',characterId:character.id,targetType,targetId});setActions(data.actions||[])}catch(caught){setError(caught.response?.data?.error||caught.message)}finally{setBusy('')}},[character?.id,character?.version,targetType,targetId]);
+  useEffect(()=>{load()},[load]);
+  const execute=async action=>{setBusy(action.key);setError('');try{const {data}=await invokeRuntimeCommand({command:'EXECUTE_CONTEXTUAL_ACTION',characterId:character.id,characterVersion:character.version,targetType,targetId,actionKey:action.actionKey,requestId:crypto.randomUUID()});setActions(data.actions||[]);await onExecuted?.()}catch(caught){setError(caught.response?.data?.error||caught.message)}finally{setBusy('')}};
+  if(busy==='load')return <div role="status" className="flex items-center gap-2 rounded-lg border border-white/10 bg-runtime-surface p-4 text-sm text-slate-400"><LoaderCircle size={16} className="animate-spin"/>Resolving contextual actions…</div>;
+  if(!actions.length&&!error)return null;
+  return <section className="rounded-lg border border-white/10 bg-runtime-surface p-5"><div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Sparkles size={16} className="text-runtime-accent"/>Contextual actions</div>{error&&<p role="alert" className="mb-3 text-sm text-red-300">{error}</p>}<div className="grid gap-2 sm:grid-cols-2">{actions.map(action=><button key={action.key} type="button" disabled={!!busy||!action.available} onClick={()=>execute(action)} title={action.unavailableReason||action.description} className="rounded-md border border-white/10 bg-white/[.025] p-3 text-left hover:border-cyan-400/40 disabled:cursor-not-allowed disabled:opacity-45"><span className="flex items-center gap-2 text-sm font-semibold">{busy===action.key&&<LoaderCircle size={14} className="animate-spin"/>}{action.label}</span>{(action.description||action.unavailableReason)&&<span className="mt-1 block text-xs text-slate-500">{action.available?action.description:action.unavailableReason}</span>}</button>)}</div></section>;
+}
