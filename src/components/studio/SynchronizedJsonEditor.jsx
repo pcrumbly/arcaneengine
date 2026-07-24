@@ -1,0 +1,7 @@
+import { useEffect,useState } from 'react';
+export default function SynchronizedJsonEditor({label,value,onChange,emptyValue,children}){
+ const [text,setText]=useState(''),[error,setError]=useState('');
+ useEffect(()=>{setText(JSON.stringify(value??emptyValue,null,2));setError('')},[value]);
+ const apply=()=>{try{onChange(JSON.parse(text));setError('')}catch(caught){setError(caught.message)}};
+ return <div className="grid gap-4 xl:col-span-2 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.6fr)]"><div>{children}</div><aside className="xl:sticky xl:top-4 xl:self-start"><div className="mb-2 flex items-center justify-between"><div><p className="text-sm text-slate-300">{label} JSON</p><p className="text-xs text-slate-600">Visual edits synchronize automatically.</p></div><button type="button" onClick={apply} className="rounded border border-runtime-accent/30 px-2 py-1 text-xs text-runtime-accent">Apply JSON</button></div><textarea value={text} onChange={event=>setText(event.target.value)} onBlur={apply} rows={24} spellCheck="false" className="w-full rounded border border-white/10 bg-runtime px-3 py-2 font-mono text-xs text-slate-300"/>{error&&<p className="mt-1 text-xs text-red-300">Invalid JSON: {error}</p>}</aside></div>;
+}

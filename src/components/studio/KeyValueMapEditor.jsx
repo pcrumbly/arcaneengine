@@ -1,0 +1,5 @@
+import { Plus,Trash2 } from 'lucide-react';
+export default function KeyValueMapEditor({label,value={},onChange}){
+ const rows=Object.entries(value),replace=(oldKey,key,amount)=>onChange(Object.fromEntries(rows.filter(([current])=>current!==oldKey).concat(key?[[key,Number(amount)||0]]:[])));
+ return <div><p className="text-xs text-slate-500">{label}</p><div className="mt-1 space-y-1">{rows.map(([key,amount],index)=><div key={index} className="grid grid-cols-[1fr_90px_auto] gap-1"><input value={key} onChange={event=>replace(key,event.target.value,amount)} placeholder="Key" className="rounded border border-white/10 bg-runtime px-2 py-1 text-xs"/><input type="number" min="0" value={amount} onChange={event=>replace(key,key,event.target.value)} className="rounded border border-white/10 bg-runtime px-2 py-1 text-xs"/><button type="button" onClick={()=>replace(key,'',0)} aria-label={`Remove ${key}`} className="text-red-300"><Trash2 size={13}/></button></div>)}</div><button type="button" onClick={()=>onChange({...value,[`cost_${rows.length+1}`]:1})} className="mt-1 flex items-center gap-1 text-xs text-runtime-accent"><Plus size={12}/>Add cost</button></div>;
+}
