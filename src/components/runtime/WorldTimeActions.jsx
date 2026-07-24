@@ -1,0 +1,5 @@
+import { Coffee, MoonStar } from 'lucide-react';
+const actions=[{key:'wait',label:'Wait 1 hour',description:'Let local conditions develop.',icon:Coffee},{key:'rest',label:'Rest 8 hours',description:'Pass the night or recover your schedule.',icon:MoonStar}];
+export default function WorldTimeActions({busy,onAction}){
+  return <section className="rounded-lg border border-white/10 bg-runtime-surface p-4"><p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Pass time</p><div className="mt-3 grid gap-2 sm:grid-cols-2">{actions.map(action=>{const Icon=action.icon;return <button key={action.key} type="button" disabled={busy} onClick={()=>onAction(action.key)} className="flex items-center gap-3 rounded-md border border-white/10 px-3 py-3 text-left transition-colors hover:bg-white/5 disabled:opacity-50"><Icon size={18} className="text-runtime-accent"/><span><span className="block text-sm font-medium">{action.label}</span><span className="block text-xs text-slate-500">{action.description}</span></span></button>})}</div></section>;
+}
