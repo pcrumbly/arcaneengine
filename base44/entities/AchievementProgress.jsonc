@@ -14,6 +14,9 @@
     "achievement_definition_id": {
       "type": "string"
     },
+    "progress_key": {
+      "type": "string"
+    },
     "criteria_values": {
       "type": "object",
       "additionalProperties": {
@@ -31,6 +34,21 @@
     "claimed_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "reward_state": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "granting",
+        "granted"
+      ],
+      "default": "pending"
+    },
+    "reward_transaction_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "version": {
       "type": "number",

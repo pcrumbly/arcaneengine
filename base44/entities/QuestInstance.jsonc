@@ -49,6 +49,7 @@
       "type": "string",
       "enum": [
         "pending",
+        "granting",
         "granted",
         "none"
       ],
