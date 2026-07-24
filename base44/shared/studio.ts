@@ -3,6 +3,7 @@ import { exportContentBundle, importContentBundle } from './contentBundles.ts';
 import { requireGamePermission } from './authorization.ts';
 import { validateCalendarConfig,validateSimulationConfig } from './calendar.ts';
 import { cleanStudioValues, createStudioRows, previewStudioRows } from './studioAuthoring.ts';
+import { acquireReleaseLock, abandonReleaseLock, exposeRecordRevision, finishReleaseLock, recordConflict, recordRevision } from './studioConcurrency.ts';
 const contentTypes = contentDefinitionTypes;
 const reserved = new Set(['id','game_id','content_version','created_date','updated_date','created_by_id']);
 const gameFields = ['title','description','terminology','theme','enabled_modules','navigation','header_indicators','character_defaults','calendar','simulation','rules'];
@@ -16,7 +17,7 @@ export async function handleStudioAuthoringCommand(base44:any,user:any,body:any)
     if((await base44.asServiceRole.entities.Game.filter({key},'-created_date',1)).length)return Response.json({error:'That game key already exists.'},{status:409});
     const game=await base44.asServiceRole.entities.Game.create({key,title,description:String(body.description||''),status:'draft',terminology:{},theme:{accent:'#22d3ee',surface:'#0a1728',background:'#07111f',text:'#f1f5f9',muted:'#64748b',border:'#ffffff',danger:'#f87171',heading_font:'system',body_font:'system',density:'comfortable',radius:'rounded',media_style:'rounded'},enabled_modules:['world','characters','quests','achievements','journal','inventory','skills','party','combat','messages','studio','settings','account'],header_indicators:['character','location','resource','currency'],character_defaults:{attributes:{},resources:{},currency:{},tags:[]},calendar:{name:'World Calendar',minutes_per_hour:60,hours_per_day:24,weekdays:[{key:'day-1',name:'Day 1'},{key:'day-2',name:'Day 2'},{key:'day-3',name:'Day 3'},{key:'day-4',name:'Day 4'},{key:'day-5',name:'Day 5'},{key:'day-6',name:'Day 6'},{key:'day-7',name:'Day 7'}],months:Array.from({length:12},(_,index)=>({key:`month-${index+1}`,name:`Month ${index+1}`,days:30})),epoch:{year:1,month:1,day:1,hour:8,minute:0},format:'{weekday}, {month} {day}, Year {year} · {hour}:{minute}'},simulation:{local_tick_minutes:15,regional_tick_minutes:60,global_tick_minutes:360,max_fast_forward_minutes:1440,fast_forward_options:[{label:'Wait 1 hour',minutes:60},{label:'Rest 8 hours',minutes:480,rest:true},{label:'Wait 1 day',minutes:1440}]},rules:{inventory_capacity:0,starter_stack_quantity:1}});
     await base44.asServiceRole.entities.GameMembership.create({game_id:game.id,user_id:user.id,role:'owner',status:'active'});
-    const pack=await createBasePack(base44,game,version),release=await base44.asServiceRole.entities.ContentRelease.create({game_id:game.id,version,content_pack_ids:[pack.id],status:'draft',notes:'Initial authoring release',validation_summary:{}});
+    const pack=await createBasePack(base44,game,version),release=await base44.asServiceRole.entities.ContentRelease.create({game_id:game.id,version,content_pack_ids:[pack.id],status:'draft',revision:1,notes:'Initial authoring release',validation_summary:{}});
     return Response.json({game,pack,release});
   }
   if(body.command==='SAVE_GAME_CONFIG'){
@@ -31,22 +32,24 @@ export async function handleStudioAuthoringCommand(base44:any,user:any,body:any)
   const release=await base44.asServiceRole.entities.ContentRelease.get(body.releaseId);
   const permission=body.command==='GET_STUDIO_CONTENT'?'content:read':'content:write',access=await requireGamePermission(base44,user,release.game_id,permission);if(access)return access;
   const entity=base44.asServiceRole.entities[body.contentType];
-  if(body.command==='GET_STUDIO_CONTENT')return Response.json({release,items:await entity.filter({game_id:release.game_id,content_version:release.version},'created_date',500)});
-  if(release.status!=='draft')return Response.json({error:'Published and retired releases are immutable.'},{status:409});
-  if(body.command==='PREVIEW_BULK_STUDIO_CONTENT')return Response.json({preview:await previewStudioRows(base44,release,body.contentType,body.items)});
-  if(body.command==='IMPORT_BULK_STUDIO_CONTENT'){const result=await createStudioRows(base44,release,body.contentType,body.items);if(!result.preview.valid)return Response.json({error:'Bulk content validation failed.',preview:result.preview},{status:422});await base44.asServiceRole.entities.ContentRelease.update(release.id,{validation_summary:{}});return Response.json(result);}
+  if(body.command==='GET_STUDIO_CONTENT'){const items=await entity.filter({game_id:release.game_id,content_version:release.version},'created_date',500);return Response.json({release:{...release,revision:Number(release.revision||1)},items:items.map(exposeRecordRevision)});}
+  if(body.command==='PREVIEW_BULK_STUDIO_CONTENT'){if(release.status!=='draft')return Response.json({error:`Release is locked for ${release.status}.`},{status:409});return Response.json({preview:await previewStudioRows(base44,release,body.contentType,body.items)});}
+  if(body.command==='IMPORT_BULK_STUDIO_CONTENT'){
+    const lock=await acquireReleaseLock(base44,release,body.expectedReleaseRevision,'editing',true);if(lock.response)return lock.response;
+    try{const result=await createStudioRows(base44,lock.release,body.contentType,body.items);if(!result.preview.valid){await abandonReleaseLock(base44,lock.release);return Response.json({error:'Bulk content validation failed.',preview:result.preview},{status:422});}const draft=await finishReleaseLock(base44,lock.release);return Response.json({...result,items:result.items.map(exposeRecordRevision),release:draft});}catch(error){await abandonReleaseLock(base44,lock.release);throw error;}
+  }
   if(body.command==='SAVE_STUDIO_CONTENT'){
-    const values=clean(body.values),key=String(values.key||'').trim();
+    const values=clean(body.values),key=String(values.key||'').trim();let current:any=null;
+    if(body.itemId){current=await entity.get(body.itemId);if(current.id!==body.itemId||current.game_id!==release.game_id||current.content_version!==release.version)return Response.json({error:'Content ownership could not be verified.'},{status:403});if(recordRevision(current)!==String(body.expectedRevision||''))return recordConflict(body.expectedRevision,current,values);}
     if(key){const uniqueQuery:any={game_id:release.game_id,content_version:release.version,key};if(body.contentType==='LocalizationEntry')uniqueQuery.locale=String(values.locale||'').trim();const duplicate=await entity.filter(uniqueQuery,'-created_date',10);if(duplicate.some((item:any)=>item.id!==body.itemId))return Response.json({error:'That content key already exists in this release.'},{status:409});}
     const preview=await previewStudioRows(base44,release,body.contentType,[values],body.itemId);if(!preview.valid)return Response.json({error:[...preview.errors,...preview.rows.flatMap((row:any)=>row.errors)].join(' ')||'Content validation failed.',preview},{status:422});
-    const payload={...values,game_id:release.game_id,content_version:release.version};
-    const item=body.itemId?await entity.update(body.itemId,payload):await entity.create(payload);
-    await base44.asServiceRole.entities.ContentRelease.update(release.id,{validation_summary:{}});
-    return Response.json({item});
+    const lock=await acquireReleaseLock(base44,release,body.expectedReleaseRevision,'editing',true);if(lock.response)return lock.response;
+    try{if(body.itemId){current=await entity.get(body.itemId);if(current.game_id!==release.game_id||current.content_version!==release.version){await abandonReleaseLock(base44,lock.release);return Response.json({error:'Content ownership could not be verified.'},{status:403});}if(recordRevision(current)!==String(body.expectedRevision||'')){await abandonReleaseLock(base44,lock.release);return recordConflict(body.expectedRevision,current,values);}}const payload={...values,game_id:release.game_id,content_version:release.version},item=body.itemId?await entity.update(body.itemId,payload):await entity.create(payload),draft=await finishReleaseLock(base44,lock.release);return Response.json({item:exposeRecordRevision(item),release:draft});}catch(error){await abandonReleaseLock(base44,lock.release);throw error;}
   }
   if(body.command==='DELETE_STUDIO_CONTENT'){
-    const item=await entity.get(body.itemId);if(item.game_id!==release.game_id||item.content_version!==release.version)return Response.json({error:'Content ownership could not be verified.'},{status:403});
-    await entity.delete(item.id);await base44.asServiceRole.entities.ContentRelease.update(release.id,{validation_summary:{}});return Response.json({deleted:true});
+    let item=await entity.get(body.itemId);if(item.id!==body.itemId||item.game_id!==release.game_id||item.content_version!==release.version)return Response.json({error:'Content ownership could not be verified.'},{status:403});if(recordRevision(item)!==String(body.expectedRevision||''))return recordConflict(body.expectedRevision,item,{});
+    const lock=await acquireReleaseLock(base44,release,body.expectedReleaseRevision,'editing',true);if(lock.response)return lock.response;
+    try{item=await entity.get(body.itemId);if(recordRevision(item)!==String(body.expectedRevision||'')){await abandonReleaseLock(base44,lock.release);return recordConflict(body.expectedRevision,item,{});}await entity.delete(item.id);const draft=await finishReleaseLock(base44,lock.release);return Response.json({deleted:true,release:draft});}catch(error){await abandonReleaseLock(base44,lock.release);throw error;}
   }
   return Response.json({error:'Unknown studio command.'},{status:400});
 }
