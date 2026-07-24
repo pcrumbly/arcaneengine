@@ -1,0 +1,7 @@
+import { Link } from 'react-router-dom';
+const routes={quest:'/quests',inventory:'/character?tab=inventory',combat:'/combat',dialogue:'/',npc:'/',character:'/world',achievement:'/achievements'};
+const title=value=>String(value||'Event').replaceAll('.',' · ').replaceAll('_',' ');
+export default function JournalEvent({event}){
+ const category=event.event_type?.split('.')[0],entries=Object.entries(event.payload||{}),route=routes[category];
+ return <article className="py-3"><div className="flex flex-wrap items-start justify-between gap-2"><div><p className="text-sm capitalize">{title(event.event_type)}</p><p className="mt-1 text-xs text-slate-500">{new Date(event.occurred_at).toLocaleString()}</p></div>{route&&<Link to={route} className="text-xs text-runtime-accent hover:underline">Open related module</Link>}</div>{entries.length>0&&<details className="mt-2 text-xs"><summary className="cursor-pointer text-slate-400">Event details</summary><dl className="mt-2 grid gap-1 rounded bg-runtime p-3">{entries.map(([key,value])=><div key={key} className="grid gap-1 sm:grid-cols-[150px_1fr]"><dt className="text-slate-500">{title(key)}</dt><dd className="break-all text-slate-300">{typeof value==='object'?JSON.stringify(value):String(value)}</dd></div>)}</dl></details>}</article>;
+}

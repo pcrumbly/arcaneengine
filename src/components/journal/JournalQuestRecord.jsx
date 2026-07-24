@@ -1,0 +1,6 @@
+import { Link } from 'react-router-dom';
+const dateFor=quest=>quest.completed_at||quest.failed_at||quest.accepted_at||quest.updated_date;
+export default function JournalQuestRecord({quest}){
+ const state=quest.state?.toLowerCase()||'unknown';
+ return <Link to="/quests" className="block rounded border border-white/10 p-3 hover:border-runtime-accent/40 hover:bg-white/[.025]"><div className="flex items-start justify-between gap-2"><p className="text-sm font-medium">{quest.definition?.name||'Legacy mission'}</p><span className={`rounded px-2 py-0.5 text-[11px] capitalize ${state==='completed'?'bg-emerald-400/10 text-emerald-300':state==='failed'?'bg-red-400/10 text-red-300':state==='active'?'bg-runtime-accent/10 text-runtime-accent':'bg-white/5 text-slate-400'}`}>{state}</span></div>{quest.definition?.description&&<p className="mt-1 line-clamp-2 text-xs text-slate-400">{quest.definition.description}</p>}<div className="mt-2 flex flex-wrap gap-x-3 text-xs text-slate-500">{dateFor(quest)&&<span>{new Date(dateFor(quest)).toLocaleString()}</span>}{quest.reward_state&&<span>Rewards: {quest.reward_state}</span>}</div></Link>;
+}
