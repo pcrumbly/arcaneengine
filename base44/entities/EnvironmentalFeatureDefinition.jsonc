@@ -1,0 +1,135 @@
+{
+  "name": "EnvironmentalFeatureDefinition",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "location_definition_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "initial_damage": {
+      "type": "number",
+      "default": 0
+    },
+    "max_damage": {
+      "type": "number",
+      "default": 100
+    },
+    "initial_access": {
+      "type": "string",
+      "enum": [
+        "open",
+        "restricted",
+        "locked"
+      ],
+      "default": "open"
+    },
+    "initial_owner_ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "hidden": {
+      "type": "boolean",
+      "default": false
+    },
+    "discovery_attribute": {
+      "type": "string",
+      "default": "perception"
+    },
+    "discovery_difficulty": {
+      "type": "number",
+      "default": 10
+    },
+    "search_outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_definition_id": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "item_definition_id",
+          "quantity"
+        ]
+      }
+    },
+    "time_effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "interval_minutes": {
+            "type": "number"
+          },
+          "effects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "interval_minutes",
+          "effects"
+        ]
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "key",
+    "name",
+    "location_definition_ids"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,4 +1,5 @@
-import { evaluateCondition, resolveCharacterEffects } from './rules.ts';
+import { evaluateCondition } from './rules.ts';
+import { resolveRuntimeEffects } from './runtimeEffects.ts';
 import { deriveSeed, randomFloatAt } from './deterministic.ts';
 import { characterEventInput, publishDomainEvent } from './eventBus.ts';
 import { entityRef } from './simulationContracts.ts';
@@ -30,7 +31,7 @@ async function execute(base44:any,character:any,definition:any,occurrenceKey:str
   const execution=await base44.asServiceRole.entities.WorldEventExecution.create({game_id:character.game_id,world_instance_id:character.world_instance_id||context.world?.world_instance_id,content_version:character.content_version,definition_id:definition.id,definition_ref:entityRef('WorldEventDefinition',definition.id,definition.content_version),character_id:character.id,occurrence_key:occurrenceKey,trigger_type:definition.trigger.type,status:'processing',world_time:context.world?.current_time,source_event_id:context.event?.id,version:1,triggered_at:new Date().toISOString()});
   try{
     let fresh=await base44.asServiceRole.entities.Character.get(character.id);if(!await evaluateCondition(base44,{character:fresh,event:context.event,world:context.world,weather:context.weather,location:context.location},definition.conditions||{})){await base44.asServiceRole.entities.WorldEventExecution.update(execution.id,{status:'skipped',version:2});return [];}
-    const resolved=await resolveCharacterEffects(base44,fresh,(definition.effects||[]).map((effect:any)=>({...effect,sourceType:effect.sourceType||'world_event',sourceId:effect.sourceId||definition.id})));if((definition.effects||[]).length)fresh=await base44.asServiceRole.entities.Character.update(fresh.id,{...resolved.patch,version:Number(fresh.version||1)+1});
+    const resolved=await resolveRuntimeEffects(base44,{character:fresh,event:context.event,world:context.world,weather:context.weather,location:context.location},(definition.effects||[]).map((effect:any)=>({...effect,sourceType:effect.sourceType||'world_event',sourceId:effect.sourceId||definition.id})));fresh=resolved.character;
     const emitted=[];for(const [index,specification] of (definition.emitted_events||[]).entries()){const requestId=`world-event:${definition.id}:${occurrenceKey}:${index}`,event=await publishDomainEvent(base44,{...characterEventInput(fresh,specification.event_type,specification.aggregate_type||'world_event',specification.aggregate_id||definition.id,requestId,{...(specification.payload||{}),world_event_key:definition.key}),occurredAt:context.world?.current_time||new Date().toISOString(),causationId:context.event?.event_id||context.event?.id});emitted.push(event);}
     await base44.asServiceRole.entities.WorldEventExecution.update(execution.id,{status:'completed',outcomes:resolved.outcomes,emitted_event_ids:emitted.map((event:any)=>event.id),version:2});return emitted;
   }catch(error){await base44.asServiceRole.entities.WorldEventExecution.update(execution.id,{status:'failed',error:String(error.message||error),version:2});throw error;}

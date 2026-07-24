@@ -1,0 +1,106 @@
+{
+  "name": "EnvironmentalFeatureInstance",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "world_instance_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "location_instance_id": {
+      "type": "string"
+    },
+    "location_definition_id": {
+      "type": "string"
+    },
+    "definition_id": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "damage": {
+      "type": "number",
+      "default": 0
+    },
+    "max_damage": {
+      "type": "number",
+      "default": 100
+    },
+    "access_state": {
+      "type": "string",
+      "enum": [
+        "open",
+        "restricted",
+        "locked"
+      ],
+      "default": "open"
+    },
+    "owner_ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "discovered": {
+      "type": "boolean",
+      "default": false
+    },
+    "search_state": {
+      "type": "string",
+      "enum": [
+        "unsearched",
+        "searched",
+        "depleted"
+      ],
+      "default": "unsearched"
+    },
+    "last_searched_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "content_version",
+    "location_instance_id",
+    "definition_id",
+    "character_id",
+    "access_state",
+    "discovered",
+    "search_state",
+    "version"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
