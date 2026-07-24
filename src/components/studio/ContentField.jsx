@@ -8,6 +8,9 @@ import WorldEventTriggerEditor from '@/components/studio/WorldEventTriggerEditor
 import WorldEventConditionsEditor from '@/components/studio/WorldEventConditionsEditor';
 import WorldEventEffectsEditor from '@/components/studio/WorldEventEffectsEditor';
 import WorldEventEmissionsEditor from '@/components/studio/WorldEventEmissionsEditor';
+import InteractionTargetingEditor from '@/components/studio/InteractionTargetingEditor';
+import InteractionSourceEditor from '@/components/studio/InteractionSourceEditor';
+import InteractionSkillCheckEditor from '@/components/studio/InteractionSkillCheckEditor';
 export default function ContentField({field,value,onChange,references={},allValues={}}){
   const common={required:field.required,value:value??'',onChange:e=>onChange(e.target.value),className:'mt-1.5 w-full rounded border border-white/10 bg-runtime px-3 py-2 text-sm'};
   if(field.type==='questGraph')return <QuestGraphEditor value={value} onChange={onChange}/>;
@@ -20,6 +23,9 @@ export default function ContentField({field,value,onChange,references={},allValu
   if(field.type==='worldEventConditions')return <SynchronizedJsonEditor label="Conditions" value={value||{}} emptyValue={{}} onChange={onChange}><WorldEventConditionsEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
   if(field.type==='worldEventEffects')return <SynchronizedJsonEditor label="Effects" value={value||[]} emptyValue={[]} onChange={onChange}><WorldEventEffectsEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
   if(field.type==='worldEventEmissions')return <SynchronizedJsonEditor label="Emitted events" value={value||[]} emptyValue={[]} onChange={onChange}><WorldEventEmissionsEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
+  if(field.type==='interactionTargeting')return <SynchronizedJsonEditor label={field.label} value={value||{}} emptyValue={{}} onChange={onChange}><InteractionTargetingEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
+  if(field.type==='interactionSource')return <SynchronizedJsonEditor label={field.label} value={value||{}} emptyValue={{}} onChange={onChange}><InteractionSourceEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
+  if(field.type==='interactionSkillCheck')return <SynchronizedJsonEditor label={field.label} value={value||{}} emptyValue={{}} onChange={onChange}><InteractionSkillCheckEditor value={value} onChange={onChange}/></SynchronizedJsonEditor>;
   if(field.type==='checkbox')return <label className="flex items-center gap-2 text-sm text-slate-300"><input type="checkbox" checked={!!value} onChange={e=>onChange(e.target.checked)}/>{field.label}</label>;
   if(field.type==='textarea'||field.type==='json')return <label className="block text-sm text-slate-300">{field.label}<textarea {...common} rows={field.type==='json'?6:3} className={`${common.className} font-mono`}/>{field.type==='json'&&<small className="text-slate-600">Advanced JSON</small>}</label>;
   if(field.type==='select')return <label className="block text-sm text-slate-300">{field.label}<select {...common}><option value="">Select…</option>{field.options.map(option=><option key={option}>{option}</option>)}</select></label>;
