@@ -1,5 +1,5 @@
 {
-  "name": "WorldState",
+  "name": "NPCActivity",
   "type": "object",
   "properties": {
     "game_id": {
@@ -11,24 +11,30 @@
     "content_version": {
       "type": "string"
     },
-    "current_minute": {
-      "type": "number",
-      "minimum": 0,
-      "default": 0
+    "npc_instance_id": {
+      "type": "string"
     },
-    "current_time": {
-      "type": "string",
-      "format": "date-time"
+    "placement_id": {
+      "type": "string"
     },
-    "weather_by_region": {
+    "location_id": {
+      "type": "string"
+    },
+    "activity_key": {
+      "type": "string"
+    },
+    "activity_label": {
+      "type": "string"
+    },
+    "started_minute": {
+      "type": "number"
+    },
+    "updated_minute": {
+      "type": "number"
+    },
+    "metadata": {
       "type": "object",
-      "additionalProperties": {
-        "type": "string"
-      }
-    },
-    "weather_slot": {
-      "type": "number",
-      "default": 0
+      "additionalProperties": true
     },
     "version": {
       "type": "number",
@@ -37,10 +43,14 @@
   },
   "required": [
     "game_id",
+    "world_instance_id",
     "content_version",
-    "current_minute",
-    "current_time",
-    "weather_by_region",
+    "npc_instance_id",
+    "placement_id",
+    "location_id",
+    "activity_key",
+    "started_minute",
+    "updated_minute",
     "version"
   ],
   "rls": {

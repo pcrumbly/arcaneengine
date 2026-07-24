@@ -13,10 +13,10 @@ async function environmentFor(base44:any,character:any){
 }
 
 function timeOccurrences(definition:any,context:any){
-  const trigger=definition.trigger||{},before=new Date(context.before).getTime(),after=new Date(context.after).getTime();
-  if(trigger.type==='at_time'){const due=new Date(trigger.at_time).getTime();return Number.isFinite(due)&&before<due&&due<=after?[`at:${new Date(due).toISOString()}`]:[];}
+  const trigger=definition.trigger||{},beforeMinute=Number(context.beforeMinute??0),afterMinute=Number(context.afterMinute??beforeMinute);
+  if(trigger.type==='at_time'){if(Number.isFinite(Number(trigger.at_minute))){const due=Number(trigger.at_minute);return beforeMinute<due&&due<=afterMinute?[`at-minute:${due}`]:[];}const before=new Date(context.before).getTime(),after=new Date(context.after).getTime(),due=new Date(trigger.at_time).getTime();return Number.isFinite(due)&&before<due&&due<=after?[`at:${new Date(due).toISOString()}`]:[];}
   if(!['interval','random_check'].includes(trigger.type))return [];
-  const interval=Math.max(1,Number(trigger.interval_minutes||60))*60000,anchor=new Date(trigger.starts_at||0).getTime(),first=Math.floor((before-anchor)/interval)+1,last=Math.floor((after-anchor)/interval),keys=[];for(let slot=first;slot<=last&&keys.length<100;slot++)if(slot>=0&&(trigger.type!=='random_check'||randomFloatAt(deriveSeed(context.world?.seed||0,`${definition.id}:${context.character.id}`),slot)<=Number(trigger.probability||0)))keys.push(`${trigger.type}:${slot}`);return keys;
+  const interval=Math.max(1,Number(trigger.interval_minutes||60)),anchor=Number(trigger.starts_minute||0),first=Math.floor((beforeMinute-anchor)/interval)+1,last=Math.floor((afterMinute-anchor)/interval),keys=[];for(let slot=first;slot<=last&&keys.length<100;slot++)if(slot>=0&&(trigger.type!=='random_check'||randomFloatAt(deriveSeed(context.world?.seed||0,`${definition.id}:${context.character.id}`),slot)<=Number(trigger.probability||0)))keys.push(`${trigger.type}:${slot}`);return keys;
 }
 
 function signalOccurrences(definition:any,context:any){

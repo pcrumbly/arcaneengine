@@ -1,0 +1,97 @@
+{
+  "name": "WorldSimulationTick",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "world_instance_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "task_id": {
+      "type": "string"
+    },
+    "task_key": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "local",
+        "regional",
+        "global"
+      ]
+    },
+    "occurrence_key": {
+      "type": "string"
+    },
+    "from_minute": {
+      "type": "number"
+    },
+    "to_minute": {
+      "type": "number"
+    },
+    "tick_count": {
+      "type": "number",
+      "minimum": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "processing",
+        "completed",
+        "failed"
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "error": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "world_instance_id",
+    "content_version",
+    "task_id",
+    "task_key",
+    "scope",
+    "occurrence_key",
+    "from_minute",
+    "to_minute",
+    "tick_count",
+    "status",
+    "version"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

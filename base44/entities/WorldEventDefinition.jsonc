@@ -38,9 +38,17 @@
             "random_check"
           ]
         },
+        "at_minute": {
+          "type": "number",
+          "minimum": 0
+        },
         "at_time": {
           "type": "string",
           "format": "date-time"
+        },
+        "starts_minute": {
+          "type": "number",
+          "minimum": 0
         },
         "starts_at": {
           "type": "string",

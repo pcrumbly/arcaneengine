@@ -211,6 +211,133 @@
         }
       }
     },
+    "calendar": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "minutes_per_hour": {
+          "type": "number",
+          "minimum": 1
+        },
+        "hours_per_day": {
+          "type": "number",
+          "minimum": 1
+        },
+        "weekdays": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "key",
+              "name"
+            ]
+          }
+        },
+        "months": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "days": {
+                "type": "number",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "key",
+              "name",
+              "days"
+            ]
+          }
+        },
+        "epoch": {
+          "type": "object",
+          "properties": {
+            "year": {
+              "type": "number"
+            },
+            "month": {
+              "type": "number",
+              "minimum": 1
+            },
+            "day": {
+              "type": "number",
+              "minimum": 1
+            },
+            "hour": {
+              "type": "number",
+              "minimum": 0
+            },
+            "minute": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "format": {
+          "type": "string"
+        }
+      }
+    },
+    "simulation": {
+      "type": "object",
+      "properties": {
+        "local_tick_minutes": {
+          "type": "number",
+          "minimum": 1
+        },
+        "regional_tick_minutes": {
+          "type": "number",
+          "minimum": 1
+        },
+        "global_tick_minutes": {
+          "type": "number",
+          "minimum": 1
+        },
+        "max_fast_forward_minutes": {
+          "type": "number",
+          "minimum": 1
+        },
+        "fast_forward_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "minutes": {
+                "type": "number",
+                "minimum": 1
+              },
+              "rest": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "label",
+              "minutes"
+            ]
+          }
+        }
+      }
+    },
     "rules": {
       "type": "object",
       "properties": {
@@ -225,6 +352,14 @@
         },
         "starter_stack_quantity": {
           "type": "number"
+        },
+        "world_start_time": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "weather_interval_minutes": {
+          "type": "number",
+          "minimum": 1
         }
       }
     }

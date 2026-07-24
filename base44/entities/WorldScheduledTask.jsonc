@@ -1,0 +1,92 @@
+{
+  "name": "WorldScheduledTask",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "world_instance_id": {
+      "type": "string"
+    },
+    "content_version": {
+      "type": "string"
+    },
+    "task_key": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "local",
+        "regional",
+        "global"
+      ]
+    },
+    "task_type": {
+      "type": "string",
+      "enum": [
+        "npc_activity_tick",
+        "weather_tick",
+        "world_tick"
+      ]
+    },
+    "due_minute": {
+      "type": "number",
+      "minimum": 0
+    },
+    "interval_minutes": {
+      "type": "number",
+      "minimum": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "completed"
+      ],
+      "default": "active"
+    },
+    "last_processed_minute": {
+      "type": "number"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "game_id",
+    "world_instance_id",
+    "content_version",
+    "task_key",
+    "scope",
+    "task_type",
+    "due_minute",
+    "interval_minutes",
+    "status",
+    "version"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

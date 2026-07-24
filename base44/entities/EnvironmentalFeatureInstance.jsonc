@@ -61,6 +61,10 @@
       "type": "string",
       "format": "date-time"
     },
+    "regenerates_minute": {
+      "type": "number",
+      "minimum": 0
+    },
     "regenerates_at": {
       "type": "string",
       "format": "date-time"

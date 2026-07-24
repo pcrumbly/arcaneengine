@@ -21,7 +21,10 @@
           "type": "string"
         },
         "version": {
-          "type": "string"
+          "type": [
+            "string",
+            "number"
+          ]
         }
       },
       "required": [
@@ -37,6 +40,15 @@
         "archived"
       ],
       "default": "active"
+    },
+    "epoch_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "current_minute": {
+      "type": "number",
+      "minimum": 0,
+      "default": 0
     },
     "current_time": {
       "type": "string",
@@ -60,6 +72,8 @@
     "key",
     "definition_ref",
     "status",
+    "epoch_at",
+    "current_minute",
     "current_time",
     "seed",
     "rng_cursor",

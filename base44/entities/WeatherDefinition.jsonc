@@ -29,6 +29,30 @@
       "minimum": 1,
       "default": 1
     },
+    "active_month_keys": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "active_phases": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "night",
+          "morning",
+          "afternoon",
+          "evening"
+        ]
+      }
+    },
+    "transition_weights": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
     "tags": {
       "type": "array",
       "items": {
