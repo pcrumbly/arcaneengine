@@ -11,6 +11,7 @@ import PageAlert from '@/components/runtime/PageAlert';
 import PageState from '@/components/runtime/PageState';
 import useNpcInteraction from '@/hooks/useNpcInteraction';
 import CommandLinks from '@/components/runtime/CommandLinks';
+import ContextualActions from '@/components/runtime/ContextualActions';
 
 export default function Home() {
   const { state, busy, error, run } = useRuntime();
@@ -28,6 +29,7 @@ export default function Home() {
       {error && <div className="mb-4"><PageAlert message={error}/></div>}
       <CommandLinks game={game}/>
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]"><LocationPanel location={state.location} exits={state.exits} npcs={state.npcs || []} busy={busy || npc.busy} pendingExitId={pendingExitId} onMove={move} onNpc={(placementId) => npc.open(state.character, placementId)}/><ActivityFeed events={state.activity || []}/></div>
+      <div className="mt-4"><ContextualActions character={state.character} targetType="location" targetId={state.location.id} onExecuted={()=>run({command:'GET_STATE',characterId:state.character.id})}/></div>
     </PageLayout>
     <NpcInteractionDialog interaction={npc.interaction} dialogue={npc.dialogue} result={npc.result} busy={npc.busy} error={npc.error} onAction={npc.act} onSelect={npc.select} onBack={npc.back} onClose={npc.close}/>
   </div>;
